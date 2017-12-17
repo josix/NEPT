@@ -90,7 +90,15 @@ if __name__ == "__main__":
 
     user_watch_list, user_set, item_set = load_raw_data('../kktix/netWorkDataAllState/training_data.data', "../kktix/netWorkDataAllState/testing_data.data")
     # model_recommendation
-    user_vertex_embedding, item_vertex_embedding = load_embedding('../kktix/netWorkDataAllState/rep.hpe', user_set, item_set)
+    # user_vertex_embedding, item_vertex_embedding = load_embedding('../kktix/netWorkDataAllState/rep.hpe', user_set, item_set)
+
+    # popularity_recommendation
+    command = "cat ../kktix/netWorkDataAllState/etNet.test ../kktix/netWorkDataAllState/etNet.train\
+            | awk 'BEGIN{item[$2]=0}{item[$2] = item[$2] + 1}END{for(i in item){print i, item[i]}}'"
+    result = subprocess.check_output(command, shell=True).decode('utf-8').split('\n')
+    popularity_list = [(int(i.split()[1]), i.split()[0]) for i in result if len(i.split()) == 2]
+    popularity_list.sort(reverse=True)
+    popularity_list = popularity_list[:10]
     with open('../kktix/netWorkDataAllState/etNet.test') as fin:
         count = 0
         maching = 0
@@ -102,19 +110,13 @@ if __name__ == "__main__":
             user, item = line.strip().split()
             print('query user:', user)
             # model_recommendation
-            recommendation_list = recommendation(item, item_vertex_embedding, item_detail_map)
+            # recommendation_list = recommendation(item, item_vertex_embedding, item_detail_map)
 
             # random_recommendation
             # recommendation_list = random_recommendation(item, item_set, item_detail_map)
 
             # popularity_recommendation
-            # command = "cat ../kktix/netWorkDataAllState/etNet.test ../kktix/netWorkDataAllState/etNet.train\
-            #         | awk 'BEGIN{item[$2]=0}{item[$2] = item[$2] + 1}END{for(i in item){print i, item[i]}}'"
-            # result = subprocess.check_output(command, shell=True).decode('utf-8').split('\n')
-            # popularity_list = [(int(i.split()[1]), i.split()[0]) for i in result if len(i.split()) == 2]
-            # popularity_list.sort(reverse=True)
-            # popularity_list = popularity_list[:10]
-            # recommendation_list = popularity_recommendation(item, popularity_list, item_detail_map)
+            recommendation_list = popularity_recommendation(item, popularity_list, item_detail_map)
 
             if not recommendation_list:
                 print("No existed query embedding in training data.")
