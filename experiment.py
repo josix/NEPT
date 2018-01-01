@@ -130,10 +130,10 @@ if __name__ == "__main__":
             machingNum = len(set(map(lambda x: x[1], recommendation_list)) & set(user_watch_list[user]))
             precision = machingNum/10
             recall = machingNum/len(user_watch_list[user])
-            print(f'precision@10: {precision} recall@10: {recall}')
+            print('precision@10: {} recall@10: {}'.format(precision, recall))
             if recall and precision:
                 fscore = 2 / (1 / precision + 1/recall)
-                print(f'F1: {fscore}')
+                print('F1: {}'.format(fscore))
 
                 ranked_precision = 0
                 ranked_machingNum = 0
@@ -145,10 +145,10 @@ if __name__ == "__main__":
                 ave_precision = ranked_precision / ranked_machingNum
                 total_avep += ave_precision
                 maching_count += 1
-                print(f'AvePrecision: {ave_precision}\n')
+                print('AvePrecision: {}\n'.format(ave_precision))
             else:
                 print()
 
-        print(f'# of queries: {count}')
-        print(f'# of queries(precision > 0): {maching_count}')
-        print(f'MAP: {total_avep/maching_count}')
+        print('# of queries: {}'.format(count))
+        print('# of queries(precision > 0): {}'.format(maching_count))
+        print('MAP: {}'.format(total_avep / maching_count))
