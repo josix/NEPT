@@ -12,7 +12,7 @@ def load_raw_data(training_path, testing_path):
             user, *items = line.strip().split()
             user_set = user_set | {"u"+user}
             item_set = item_set | set(items)
-            user_watch_list["u"+user] += items
+            # user_watch_list["u"+user] += items # Only use testing data for experiment answer simulation
     with open(testing_path, 'rt') as fin:
         for line in fin:
             user, *items = line.strip().split()
@@ -90,38 +90,65 @@ if __name__ == "__main__":
 
     user_watch_list, user_set, item_set = load_raw_data('../kktix/netWorkDataAllState/training_data.data', "../kktix/netWorkDataAllState/testing_data.data")
     # model_recommendation
-    # user_vertex_embedding, item_vertex_embedding = load_embedding('../kktix/netWorkDataAllState/rep.hpe', user_set, item_set)
+    user_vertex_embedding, item_vertex_embedding = load_embedding('../kktix/netWorkDataAllState/rep.hpe', user_set, item_set)
 
     # popularity_recommendation
-    command = "cat ../kktix/netWorkDataAllState/etNet.test ../kktix/netWorkDataAllState/etNet.train\
-            | awk 'BEGIN{item[$2]=0}{item[$2] = item[$2] + 1}END{for(i in item){print i, item[i]}}'"
-    result = subprocess.check_output(command, shell=True).decode('utf-8').split('\n')
-    popularity_list = [(int(i.split()[1]), i.split()[0]) for i in result if len(i.split()) == 2]
-    popularity_list.sort(reverse=True)
-    popularity_list = popularity_list[:10]
-    with open('../kktix/netWorkDataAllState/etNet.test') as fin:
+    # command = "cat ../kktix/netWorkDataAllState/etNet.test ../kktix/netWorkDataAllState/etNet.train\
+            # | awk 'BEGIN{item[$2]=0}{item[$2] = item[$2] + 1}END{for(i in item){print i, item[i]}}'"
+    # result = subprocess.check_output(command, shell=True).decode('utf-8').split('\n')
+    # popularity_list = [(int(i.split()[1]), i.split()[0]) for i in result if len(i.split()) == 2]
+    # popularity_list.sort(reverse=True)
+    # popularity_list = popularity_list[:10]
+
+    # Read experiment data
+    with open('../kktix/netWorkDataAllState/experimentQuery.data') as fin:
         count = 0
-        maching = 0
+        maching_count = 0
+        total_avep = 0
         for line in fin:
             count += 1
-            # show detail
-            # if count == 10:
-                # break
+            # early stop
+            if count == 10:
+                break
             user, item = line.strip().split()
             print('query user:', user)
             # model_recommendation
-            # recommendation_list = recommendation(item, item_vertex_embedding, item_detail_map)
+            recommendation_list = recommendation(item, item_vertex_embedding, item_detail_map)
 
             # random_recommendation
             # recommendation_list = random_recommendation(item, item_set, item_detail_map)
 
             # popularity_recommendation
-            recommendation_list = popularity_recommendation(item, popularity_list, item_detail_map)
+            # recommendation_list = popularity_recommendation(item, popularity_list, item_detail_map)
 
             if not recommendation_list:
                 print("No existed query embedding in training data.")
                 count -= 1
                 continue
-            maching += len(set(map(lambda x: x[1], recommendation_list)) & set(user_watch_list[user])) # user always books the same event?
-            print('machingNum: {}\n'.format(len(set(map(lambda x: x[1], recommendation_list)) & set(user_watch_list[user]))))
-        print('score: {}, machingNum: {}, testing queryNum: {}'.format(maching/(count*10), maching, count))
+
+            # scoring
+            machingNum = len(set(map(lambda x: x[1], recommendation_list)) & set(user_watch_list[user]))
+            precision = machingNum/10
+            recall = machingNum/len(user_watch_list[user])
+            print(f'precision@10: {precision} recall@10: {recall}')
+            if recall and precision:
+                fscore = 2 / (1 / precision + 1/recall)
+                print(f'F1: {fscore}')
+
+                ranked_precision = 0
+                ranked_machingNum = 0
+                for index, result in enumerate(recommendation_list):
+                    temp, item = result
+                    if item in user_watch_list[user]:
+                        ranked_machingNum += 1
+                        ranked_precision += ranked_machingNum / (index + 1)
+                ave_precision = ranked_precision / ranked_machingNum
+                total_avep += ave_precision
+                maching_count += 1
+                print(f'AvePrecision: {ave_precision}\n')
+            else:
+                print()
+
+        print(f'# of queries: {count}')
+        print(f'# of queries(precision > 0): {maching_count}')
+        print(f'MAP: {total_avep/maching_count}')
