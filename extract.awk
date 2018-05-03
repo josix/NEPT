@@ -3,5 +3,7 @@ BEGIN {
   OFS=" "
 }
 {
-  print $user_column, $item_column
+  if ($user_column != "" && $item_column != "") {
+    print $user_column, $item_column
+  }
 }
