@@ -1,7 +1,7 @@
 """
 Export data in proNet-core's input data format:
     eg:
-        <source.data>                  ->                      <a.out>
+        <source.data>                  ->                      <export.datat>
         user   itemList                               user item  weight
         u1     item1 item2 item3 ...                  u1   item1 1
                                                       u1   item2 1
@@ -16,7 +16,7 @@ PARSER.add_argument("file",
                     help="Relative path of file which is to be converted.")
 PARSER.add_argument("-o",
                     "--output",
-                    default='./a.out',
+                    default='./export.data',
                     type=str,
                     help="Output path of converted file.")
 ARGS = PARSER.parse_args()
