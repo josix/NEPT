@@ -7,7 +7,6 @@ NetworkTools includes functions below:
 - convert user-item record to user-list(of items) record
 - split all data into a training set and a testing set
 - export [proNet-core's training data format](https://github.com/cnclabs/proNet-core#task)
-- execute an experiment for certain embedding result (TODO: refactor, this file is messy)
 
 ## The Full Execution Flow
 1. Execute extact.sh will produce a user-item pairs data.
