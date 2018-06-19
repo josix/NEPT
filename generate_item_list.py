@@ -20,7 +20,7 @@ PARSER.add_argument("-o",
                     "--output",
                     default='./itemsList.data',
                     type=str,
-                    help="Output path of converted file.")
+                    help="Output path of converted file. (default: itemList.data)")
 ARGS = PARSER.parse_args()
 FILEPATH = ARGS.file
 OUTPUT = ARGS.output

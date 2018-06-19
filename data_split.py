@@ -18,12 +18,12 @@ PARSER.add_argument("-o1",
                     "--train_output",
                     default='./training.data',
                     type=str,
-                    help="Output path of training file.")
+                    help="Output path of training file. Default to training.data.")
 PARSER.add_argument("-o2",
                     "--test_output",
                     default='./testing.data',
                     type=str,
-                    help="Output path of testing file.")
+                    help="Output path of testing file. Default to testing.data")
 ARGS = PARSER.parse_args()
 FILEPATH = ARGS.file
 TRAIN_OUTPUT = ARGS.train_output

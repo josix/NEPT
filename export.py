@@ -18,7 +18,7 @@ PARSER.add_argument("-o",
                     "--output",
                     default='./export.data',
                     type=str,
-                    help="Output path of converted file.")
+                    help="Output path of converted file. (default: export.data)")
 ARGS = PARSER.parse_args()
 FILEPATH = ARGS.file
 OUTPUT = ARGS.output
