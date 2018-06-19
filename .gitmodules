@@ -1,6 +1,6 @@
 [submodule "jieba-zh_TW"]
 	path = jieba-zh_TW
-	url = https://github.com/ldkrsi/jieba-zh_TW
+	url = https://github.com/ldkrsi/jieba-zh_TW.git
 [submodule "proNet-core"]
 	path = proNet-core
 	url = https://github.com/cnclabs/proNet-core.git
