@@ -16,12 +16,12 @@ PARSER.add_argument("file",
                     help="Relative path of file which is to be converted.")
 PARSER.add_argument("-o1",
                     "--train_output",
-                    default='./training.data',
+                    default='../data/training.data',
                     type=str,
                     help="Output path of training file. Default to training.data.")
 PARSER.add_argument("-o2",
                     "--test_output",
-                    default='./testing.data',
+                    default='../data/testing.data',
                     type=str,
                     help="Output path of testing file. Default to testing.data")
 ARGS = PARSER.parse_args()

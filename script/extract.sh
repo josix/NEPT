@@ -17,4 +17,4 @@ then
   exit 1
 fi
 
-awk -f "./extract.awk" -v user_column=$2 -v item_column=$3 $1 > user-item.data
+awk -f "./extract.awk" -v user_column=$2 -v item_column=$3 $1 > ../data/user-item.data

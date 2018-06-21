@@ -11,7 +11,7 @@ PARSER.add_argument("file",
                     help="Relative path of the representation file which is to be converted.")
 PARSER.add_argument("-o",
                     "--output",
-                    default='./rep.json',
+                    default='../data/rep.json',
                     type=str,
                     help="Output path of converted file. (default: rep.json)")
 ARGS = PARSER.parse_args()
