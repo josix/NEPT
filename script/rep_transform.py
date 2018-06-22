@@ -26,7 +26,7 @@ with open(FILEPATH, 'rt') as fin:
         entity_id, *rep = line.strip().split()
         if entity_id[0] == 'u':
             continue
-        ENTITY_REP_MAPPING[entity_id] = rep
+        ENTITY_REP_MAPPING[entity_id] = list(map(float, rep))
 
 with open(OUTPUT, 'w') as outfile:
     json.dump(ENTITY_REP_MAPPING, outfile)
