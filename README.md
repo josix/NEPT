@@ -29,3 +29,16 @@ python3 data_split.py [-o1 TRAIN_OUTPUT] [-o2 TEST_OUTPUT] <items-list_file_path
 ```bash
 python3 export.py [-o OUTPUT_PATH] <user-itemslist_file_path>
 ```
+5. Using proNet-core's model to get the embeddings of the users and items.
+```bash
+./proNet-core/cli/hpe -train ./data/export.data -save ./data/rep.hpe -undirected 1 -dimensions 128 -reg 0.01 -sample_times 5 -walk_steps 5 -negative_samples 5 -alpha 0.025 -threads 4
+```
+6. Transform the embedding file format into JSON format.
+```bash
+python3 rep_transform.py [-o OUTPUT_PATH] <representation_file_path>
+```
+7. Using the Jieba (Chinese word Segmentation) to get the segmentation for each event title.
+```bash
+python3 segement.py [-o OUTPUT_PATH] <title_file_path>
+```
+8. Using vector space model to retrieval top k similar (cosine similarity) training events' embeddings and take the average of these, then produce new embedding to the unseen event.
