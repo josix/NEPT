@@ -2,3 +2,5 @@
 temp/*
 data/*
 sample/*
+source
+*.lock
