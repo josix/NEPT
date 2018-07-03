@@ -23,7 +23,7 @@ PARSER.add_argument("file",
                     help="Relative path of file which is to be converted.")
 PARSER.add_argument("-o",
                     "--output",
-                    default='../data/tags.json',
+                    default='./data/tags.json',
                     type=str,
                     help="Output path of converted file.")
 ARGS = PARSER.parse_args()
