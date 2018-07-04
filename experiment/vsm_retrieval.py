@@ -33,7 +33,7 @@ def vsm(fp=CORPUS_FILE):
         return index_id_dict, vectorizer, document_term_matrix
 
 def closest_topK(unseen_event, ids_dict, model, doc_matrix, topK=10):
-    jieba.set_dictionary("../jieba-zh_TW/jieba/dict.txt")
+    jieba.set_dictionary("./jieba-zh_TW/jieba/dict.txt")
     unseen_even_tags = jieba.analyse.extract_tags(unseen_event)
     unseen_event_vector = [0] * doc_matrix[1]
     for tag in unseen_even_tags:
