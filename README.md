@@ -29,7 +29,7 @@ pipenv install [--skip-lock]
 pipenv shell
 ```
 
-## Add Source File to This Repo
+## Add Source Files to This Repo
 Create a source/ directory
 ```bash
 mkdir source
