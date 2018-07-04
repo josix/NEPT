@@ -77,7 +77,6 @@ def embedding_propgation(ranking_list, fp=EMBEDDING_FILE):
 
 def load_unseen(fp=UNSEEN_EVENTS_FILE):
     with open(fp, 'rt') as fin:
-        fin.readline()
         unseen_dict = {}
         for line in fin:
             splitted_line = line.strip().split(',')
