@@ -21,6 +21,7 @@ git submodule init
 git submodule update
 ```
 After cloning this repo and its submodule
+
 You need to [compile the proNet-core](https://github.com/cnclabs/proNet-core#compilation) and install some python third-party libraries.
 ```bash
 pip install pipenv
@@ -34,6 +35,7 @@ Create a source/ directory
 mkdir source
 ```
 Move the log file and unseen title file into the source/ directory
+
 File example:
 (No need to keep the header of each column)
 ```csv
