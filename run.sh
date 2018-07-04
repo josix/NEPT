@@ -1,7 +1,7 @@
 #/bin/sh
 
-USAGE="usage: run.sh file_path userId_column_number itemId_column_number title_column_number"
-test "$#" != "4" && echo "$USAGE" && exit 1
+USAGE="usage: run.sh training_file_path userId_column_number itemId_column_number title_column_number unseen_events_file_path"
+test "$#" != "5" && echo "$USAGE" && exit 1
 
 if ! [ -e $1 ]
 then
@@ -22,4 +22,4 @@ python3 "./script/export.py" -o "./data/export.data" ./data/train.data
 ../KKTeam/proNet-core/cli/hpe -train ./data/export.data -save ./data/rep.hpe -undirected 1 -dimensions 128 -reg 0.01 -sample_times 5 -walk_steps 5 -negative_samples 5 -alpha 0.025 -threads 4
 python3 ./script/rep_transform.py -o ./data/rep.json ./data/rep.hpe
 python3 ./script/segement.py -o ./data/tags.json ./data/eventsTitle.data
-python3 ./experiment/vsm_retrieval.py ./data/rep.json ./data/tags.json
+python3 ./experiment/vsm_retrieval.py $5 ./data/rep.json ./data/tags.json
