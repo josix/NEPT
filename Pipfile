@@ -6,6 +6,8 @@ name = "pypi"
 [packages]
 scikit-learn = "*"
 jieba = "*"
+numpy = "*"
+scipy = "*"
 
 [dev-packages]
 
