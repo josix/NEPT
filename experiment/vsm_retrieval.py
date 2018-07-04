@@ -10,6 +10,9 @@ import jieba
 import jieba.analyse
 
 PARSER = argparse.ArgumentParser()
+PARSER.add_argument("unseen_event_file",
+                    type=str,
+                    help="The unseen events title list")
 PARSER.add_argument("embedding_file",
                     type=str,
                     help="The embedding json file")
@@ -17,9 +20,11 @@ PARSER.add_argument("corpus_file",
                     type=str,
                     help="The items' title text file (json) for training vsm")
 ARGS = PARSER.parse_args()
+UNSEEN_EVENTS_FILE = ARGS.unseen_event_file
 EMBEDDING_FILE = ARGS.embedding_file
 CORPUS_FILE = ARGS.corpus_file
 
+jieba.set_dictionary("./jieba-zh_TW/jieba/dict.txt")
 def vsm(fp=CORPUS_FILE):
     with open(fp, 'r') as json_file_in:
         item_tags_dict = json.load(json_file_in)
@@ -33,7 +38,6 @@ def vsm(fp=CORPUS_FILE):
         return index_id_dict, vectorizer, document_term_matrix
 
 def closest_topK(unseen_event, ids_dict, model, doc_matrix, topK=10):
-    jieba.set_dictionary("./jieba-zh_TW/jieba/dict.txt")
     unseen_even_tags = jieba.analyse.extract_tags(unseen_event)
     unseen_event_vector = [0] * doc_matrix[1]
     for tag in unseen_even_tags:
@@ -61,21 +65,40 @@ def embedding_propgation(ranking_list, fp=EMBEDDING_FILE):
             # they are removed from the training set.
             print("{} is not a significant event so that not included in the training embedding.".format(id_))
             continue
-        if ranking_list_index == 0:
+        if add_count == 0:
             accumulate_vector = added_vector
         else:
             for index, (element1, element2) in\
                             enumerate(zip(accumulate_vector, added_vector)):
                 accumulate_vector[index] = element1 + element2
         add_count += 1
-    print(add_count)
+    print(f'{add_count} related events.')
     return list(map(lambda x: x / add_count, accumulate_vector))
+
+def load_unseen(fp=UNSEEN_EVENTS_FILE):
+    with open(fp, 'rt') as fin:
+        fin.readline()
+        unseen_dict = {}
+        for line in fin:
+            splitted_line = line.strip().split(',')
+            if len(splitted_line) == 1:
+                continue
+            id_, title = splitted_line
+            unseen_dict[id_] = title
+        return unseen_dict
 
 
 if __name__ == "__main__":
     IDS_DICT, TRAINED_MODEL, DOC_MATRIX = vsm()
-    while True:
-        input_str = input("Enter event title:")
-        ID_LIST = closest_topK(input_str, IDS_DICT, TRAINED_MODEL, DOC_MATRIX)
-        print(embedding_propgation(ID_LIST))
-
+    UNSEEN_DICT = load_unseen()
+    UNSEEN_EMBEDDING_DICT = {}
+    for id_, title_string in UNSEEN_DICT.items():
+        print('unssenId:', id_)
+        ID_LIST =\
+            closest_topK(title_string, IDS_DICT, TRAINED_MODEL, DOC_MATRIX)
+        UNSEEN_EMBEDDING_DICT[id_] = embedding_propgation(ID_LIST)
+        print()
+    with open('unssen_events_rep.csv', 'wt') as fout:
+        fout.write(f"{len(UNSEEN_EMBEDDING_DICT)}\n")
+        for id_, embedding in UNSEEN_EMBEDDING_DICT.items():
+            fout.write(f"{id_} {' '.join(map(lambda x:str(round(x, 6)),embedding))}\n")
