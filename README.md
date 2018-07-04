@@ -42,3 +42,6 @@ python3 rep_transform.py [-o OUTPUT_PATH] <representation_file_path>
 python3 segement.py [-o OUTPUT_PATH] <title_file_path>
 ```
 8. Using vector space model to retrieval top k similar (cosine similarity) training events' embeddings and take the average of these, then produce new embedding to the unseen event.
+```bash
+python3 vsm_retrieval.py <unseen_event_file> <embedding_JSON_file> <corpus_json_file>(title's segemntation)
+```
