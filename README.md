@@ -1,8 +1,8 @@
-# NetworkTools
+# NEPT
 
-NetworkTools is a toolbox used for preparing data to conduct some experiments on [proNet-core](https://github.com/cnclabs/proNet-core)'s algorithm.
+NEPT is a toolbox used for preparing data to conduct some experiments on [proNet-core](https://github.com/cnclabs/proNet-core)'s algorithm.
 
-NetworkTools includes features below:
+NEPT includes features below:
 - extract data which are written in csv format
 - convert user-item record to user-list(of items) record
 - split all data into a training set and a testing set
@@ -12,11 +12,11 @@ NetworkTools includes features below:
 ## Setup Environment
 Clone the repo with its submodule
 ```bash
-git clone --recursive https://github.com/wilson8507/NetworkTools.git
+git clone --recursive https://github.com/wilson8507/NEPT.git
 ```
 Or clone them separately
 ```bash
-git clone https://github.com/wilson8507/NetworkTools.git
+git clone https://github.com/wilson8507/NEPT.git
 git submodule init
 git submodule update
 ```
