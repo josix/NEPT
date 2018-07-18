@@ -97,7 +97,7 @@ if __name__ == "__main__":
             closest_topK(title_string, IDS_DICT, TRAINED_MODEL, DOC_MATRIX)
         UNSEEN_EMBEDDING_DICT[id_] = embedding_propgation(ID_LIST)
         print()
-    with open('unssen_events_rep.csv', 'wt') as fout:
+    with open('unssen_events_rep_hpe2.txt', 'wt') as fout:
         fout.write("{}\n".format(len(UNSEEN_EMBEDDING_DICT)))
         for id_, embedding in UNSEEN_EMBEDDING_DICT.items():
             fout.write("{} {}\n".format(id_, ' '.join(map(lambda x:str(round(x, 6)),embedding))))

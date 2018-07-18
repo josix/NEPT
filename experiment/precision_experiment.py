@@ -3,33 +3,33 @@ from math import sqrt
 import subprocess
 import random
 
-def load_raw_data(training_path, testing_path):
-    user_set = set()
-    user_watch_list = defaultdict(list)
-    item_set = set()
-    with open(training_path, 'rt') as fin:
+def load_events(path):
+    with open(path, 'rt') as fin:
+        training_id = []
         for line in fin:
-            user, *items = line.strip().split()
-            user_set = user_set | {"u"+user}
-            item_set = item_set | set(items)
-            # user_watch_list["u"+user] += items # Only use testing data for experiment answer simulation
-    with open(testing_path, 'rt') as fin:
-        for line in fin:
-            user, *items = line.strip().split()
-            user_set = user_set | {"u"+user}
-            item_set = item_set | set(items)
-            user_watch_list["u"+user] += items
-    return user_watch_list, user_set, item_set
+            user, item, title = line.strip().split(',')
+            training_id.append(item)
+        item_set =  set(training_id)
+    return item_set
 
-def load_embedding(path, user_set, item_set):
+def load_watch_list(path):
+    user_watch_list = defaultdict(list)
+    with open(path, 'rt') as fin:
+        for line in fin:
+            user, *items = line.strip().split()
+            user_watch_list["u"+user] += items
+    return user_watch_list
+
+def load_embedding(path):
     user_vertex_embedding = defaultdict(list)
     item_vertex_embedding = defaultdict(list)
     with open(path, 'rt') as fin:
+        fin.readline()
         for line in fin:
             vertex, *embedding = line.strip().split()
-            if vertex in user_set:
+            if vertex[0] == 'u':
                 user_vertex_embedding[vertex] = [float(x) for x in embedding]
-            elif vertex in item_set:
+            else:
                 item_vertex_embedding[vertex] = [float(x) for x in embedding]
     return user_vertex_embedding, item_vertex_embedding
 
@@ -84,45 +84,57 @@ def popularity_recommendation(query, recommendation_list, item_detail_map=None):
 
 if __name__ == "__main__":
     # show detail
-    command = "awk -F, '{print $0 }' '../kktix/preproecessed_data/eventDetailMap_v7.csv'"
+    command = "awk -F, '{print $0 }' '../../kktix/preproecessed_data/eventDetailMap_v7.csv'"
     result = subprocess.check_output(command, shell=True).decode('utf-8').split('\n')
     item_detail_map = {i.split(',')[0]:i for i in result}
 
-    user_watch_list, user_set, item_set = load_raw_data('../kktix/netWorkDataAllState/training_data.data', "../kktix/netWorkDataAllState/testing_data.data")
-    # model_recommendation
-    # user_vertex_embedding, item_vertex_embedding = load_embedding('../kktix/netWorkDataAllState/rep.hpe', user_set, item_set)
+    user_watch_list = load_watch_list('./data/precision/user-item-future-answer.data')
 
-    # popularity_recommendation
-    command = "cat ../kktix/netWorkDataAllState/etNet.test ../kktix/netWorkDataAllState/etNet.train\
-            | awk 'BEGIN{item[$2]=0}{item[$2] = item[$2] + 1}END{for(i in item){print i, item[i]}}'"
+    # random recommendation
+    # seen_events = load_events('../source/entertainment_transactions_v7_Before20161231.data')
+    # unseen_events = load_events('../source/entertainment_transactions_v7_After20161231.data')
+
+    # model_recommendation
+    # user_vertex_embedding, item_vertex_embedding = load_embedding('../data/rep.hpe')
+    # _, unseen_vectex_embedding = load_embedding('../unssen_events_rep.txt')
+    # item_vertex_embedding = {**item_vertex_embedding, **unseen_vectex_embedding}
+
+    popularity_recommendation
+    command = "cat ../source/entertainment_transactions_v7_Before20161231.data ../source/entertainment_transactions_v7_After20161231.data\
+            | awk -F, 'BEGIN{item[$2]=0}{item[$2] = item[$2] + 1}END{for(i in item){print i, item[i]}}'"
     result = subprocess.check_output(command, shell=True).decode('utf-8').split('\n')
     popularity_list = [(int(i.split()[1]), i.split()[0]) for i in result if len(i.split()) == 2]
     popularity_list.sort(reverse=True)
     popularity_list = list(map(lambda x: x[1], popularity_list[:10]))
 
     # Read experiment data
-    with open('../kktix/netWorkDataAllState/experimentQuery.data') as fin:
+    with open('./data/user_item_query.txt') as fin:
         count = 0
         maching_count = 0
         total_avep = 0
         for line in fin:
             count += 1
             # early stop
-            if count == 10:
+            if count == 500:
                 break
             user, item = line.strip().split()
+
+            if len(user_watch_list[user]) == 0:
+                count -= 1
+                continue
+
             print('query user:', user)
             # model_recommendation
             # recommendation_list = recommendation(item, item_vertex_embedding, item_detail_map)
 
             # random_recommendation
-            # recommendation_list = random_recommendation(item, item_set, item_detail_map)
+            # recommendation_list = random_recommendation(item, seen_events | unseen_events, item_detail_map)
 
             # popularity_recommendation
             recommendation_list = popularity_recommendation(item, popularity_list, item_detail_map)
 
             if not recommendation_list:
-                print("No existed query embedding in training data.")
+                # print("No existed query embedding in training data.")
                 count -= 1
                 continue
 
