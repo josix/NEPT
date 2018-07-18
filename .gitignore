@@ -1,6 +1,8 @@
+*_data/
 *.txt
 temp/*
 data/*
+*/data/*
 sample/*
 source
 *.lock
