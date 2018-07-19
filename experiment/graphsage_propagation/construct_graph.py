@@ -1,7 +1,9 @@
 import json
 import random
+from collections import defaultdict
 import networkx as nx
 from networkx.readwrite import json_graph
+import numpy as np
 
 
 def load_edges(file_path_list: list) -> list:
@@ -19,8 +21,23 @@ def load_edges(file_path_list: list) -> list:
     return edge_list
 
 
+def load_embedding(file_path):
+    vertex_embedding = defaultdict(list)
+    with open(file_path) as fin:
+        fin.readline()
+        training_list = []
+        for line in fin:
+            vertex, *embedding = line.strip().split()
+            training_list.append(vertex)
+            vertex_embedding[vertex] = list(map(lambda x: float(x), embedding))
+        return vertex_embedding, set(training_list)
+
+
 if __name__ == "__main__":
     EDGES = load_edges(["../../source/training_data_4years.data", "../../source/testing_data_4years.data"])
+    EMBEDDING, TRAINING_SET = load_embedding("../../hpe_data/rep.hpe")
+    DIM = len(list(EMBEDDING.values())[0])
+
     G = nx.Graph()
     G.add_edges_from(EDGES)
     NODE_SAMPLING = random.sample(G.nodes(), int(len(G.nodes())*0.4))
@@ -43,6 +60,17 @@ if __name__ == "__main__":
     USER_NODE_COUNT = 0
     ITEM_NODE_COUNT = 0
     for index, node in enumerate(G.nodes()):
+        if node in TRAINING_SET:
+            if index == 0:
+                EMBEDDING_MATRIX = [EMBEDDING[node]]
+            else:
+                EMBEDDING_MATRIX.append([EMBEDDING[node]])
+        else:
+            if index == 0:
+                EMBEDDING_MATRIX = [[0] * DIM]
+            else:
+                EMBEDDING_MATRIX.append([[0] * DIM])
+
         if node[0] == "u":
             USER_NODE_COUNT += 1
         else:
@@ -53,7 +81,8 @@ if __name__ == "__main__":
         json.dump(ID_MAP, fout)
     with open("CompleteTime-class_map.json", "wt") as fout:
         json.dump(CLASS_MAP, fout)
-    print(f"#edgs: {len(EDGES)}")
+    np.save('CompleteTime-feats.npy', np.array(EMBEDDING_MATRIX))
+    print(f"#edges: {len(EDGES)}")
     print(f"#nodes: {len(G.nodes())}")
     print(f"#users: {USER_NODE_COUNT}")
     print(f"#items: {ITEM_NODE_COUNT}")
