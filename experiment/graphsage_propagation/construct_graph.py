@@ -59,17 +59,18 @@ if __name__ == "__main__":
     CLASS_MAP = {}
     USER_NODE_COUNT = 0
     ITEM_NODE_COUNT = 0
+    EMBEDDING_MATRIX = []
     for index, node in enumerate(G.nodes()):
         if node in TRAINING_SET:
             if index == 0:
-                EMBEDDING_MATRIX = [EMBEDDING[node]]
+                EMBEDDING_MATRIX.append(EMBEDDING[node])
             else:
-                EMBEDDING_MATRIX.append([EMBEDDING[node]])
+                EMBEDDING_MATRIX.append(EMBEDDING[node])
         else:
             if index == 0:
-                EMBEDDING_MATRIX = [[0] * DIM]
+                EMBEDDING_MATRIX.append([0] * DIM)
             else:
-                EMBEDDING_MATRIX.append([[0] * DIM])
+                EMBEDDING_MATRIX.append([0] * DIM)
 
         if node[0] == "u":
             USER_NODE_COUNT += 1
