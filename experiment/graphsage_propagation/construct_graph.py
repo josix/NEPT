@@ -40,12 +40,12 @@ if __name__ == "__main__":
 
     G = nx.Graph()
     G.add_edges_from(EDGES)
-    VAL_SET = random.sample(G.nodes(), int(len(G.nodes())*0.4))
+    VAL_SET = random.sample(TRAINING_SET, int(len(TRAINING_SET)*0.4))
     for node in G.nodes():
         if node in VAL_SET:
             G.node[node]["val"] = True
             G.node[node]["test"] = False
-        elif node not in TRAINING_SET:
+        if node not in TRAINING_SET:
             G.node[node]["val"] = False
             G.node[node]["test"] = True
         else:
