@@ -37,5 +37,5 @@ for id_ in TEST_IDS:
 with open('rep.graphsage', 'wt') as fout:
     fout.write(f"{len(embedding_mapping)} {len(EMBEDDING[0])}\n")
     for vertex, embedding in embedding_mapping.items():
-        fout.write(f"{vertex}\n")
+        fout.write(f"{vertex} ")
         fout.write("{}\n".format(' '.join(map(str, embedding))))
