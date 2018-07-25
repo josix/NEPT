@@ -48,6 +48,24 @@ def recommendation(query, item_vertex_embedding, item_detail_map=None):
         print(item_detail_map[recommendation[1]])
     return list(map(lambda x: x[1], recommendation_list[1:11]))
 
+def new_event_recommendation(query, item_vertex_embedding, unseen_set, item_detail_map=None):
+    print("query event:", query)
+    print(item_detail_map[query])
+    if query not in item_vertex_embedding: # Because the number of items for each user is too low so that not all items are embedding
+        return False
+    query_embedding = item_vertex_embedding[query]
+    item_vertex_embedding = {key: value for key, value in item_vertex_embedding.items() if key in unseen_set}
+    rec_list = []
+    for item in item_vertex_embedding:
+        cosine_similarity = cosine(query_embedding, item_vertex_embedding[item])
+        rec_list.append((cosine_similarity, item))
+    rec_list.sort(reverse=True)
+    for index, rec in enumerate(rec_list[1:11]):
+        print("{} Recommendation: {}".format(index, rec))
+        # show detail
+        print(item_detail_map[rec[1]])
+    return list(map(lambda x: x[1], rec_list[1:11]))
+
 def cosine(v1, v2):
     numerator = 0
     denominator = 0
@@ -91,13 +109,17 @@ if __name__ == "__main__":
 
     # Embedding Generation
     # model case
-    user_vertex_embedding, item_vertex_embedding = load_embedding('../data/rep.hpe')
-    _, unseen_vectex_embedding = load_embedding('../unssen_events_rep_hpe2.txt')
+    # hpe/mf + vsm
+    user_vertex_embedding, item_vertex_embedding = load_embedding('../hpe_data/rep.hpe')
+    _, unseen_vectex_embedding = load_embedding('../unseen_data/unssen_events_rep_hpe.txt')
+    rec_embedding = {**item_vertex_embedding, **unseen_vectex_embedding}
 
-    # rendom giving case
-    # unseen_vectex_embedding = random_embedding(unseen_events, 128)
+    # GraphSAGE
+    # _, rec_embedding = load_embedding('../graphSAGE_data/graphsage_mean_small_0.000010/rep.graphsage')
 
-    item_vertex_embedding = {**item_vertex_embedding, **unseen_vectex_embedding}
+    # random embedding
+    # rec_embedding = random_embedding(unseen_events, 128)
+
 
     with open('./data/random_event_query.txt', 'rt') as fin:
         count = 0
@@ -112,13 +134,17 @@ if __name__ == "__main__":
 
             # Recommendation Model
             # model version
-            recommendation_list = recommendation(query, item_vertex_embedding, item_detail_map)
+            # recommendation_list = recommendation(query, rec_embedding, item_detail_map)
+
+            # only new event recommendated
+            recommendation_list = new_event_recommendation(query, rec_embedding, unseen_events, item_detail_map)
 
             # random_recommendation
             # recommendation_list = random_recommendation(query, seen_events | unseen_events, item_detail_map)
 
             if not recommendation_list:
-                count -= 1
+                # count -= 1
+                print('No Embedding\n')
                 continue
             acu_recommendation_list.extend(recommendation_list)
 
