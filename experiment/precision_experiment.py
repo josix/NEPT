@@ -88,24 +88,28 @@ if __name__ == "__main__":
     result = subprocess.check_output(command, shell=True).decode('utf-8').split('\n')
     item_detail_map = {i.split(',')[0]:i for i in result}
 
-    user_watch_list = load_watch_list('./data/precision/user-item-future-answer.data')
+    user_watch_list = load_watch_list('./data/precision/user_unseen_answer.data')
 
     # random recommendation
     # seen_events = load_events('../source/entertainment_transactions_v7_Before20161231.data')
     # unseen_events = load_events('../source/entertainment_transactions_v7_After20161231.data')
 
     # model_recommendation
+    # hpe/mf + vsm
     # user_vertex_embedding, item_vertex_embedding = load_embedding('../data/rep.hpe')
     # _, unseen_vectex_embedding = load_embedding('../unssen_events_rep.txt')
-    # item_vertex_embedding = {**item_vertex_embedding, **unseen_vectex_embedding}
+    # rec_embedding = {**item_vertex_embedding, **unseen_vectex_embedding}
 
-    popularity_recommendation
-    command = "cat ../source/entertainment_transactions_v7_Before20161231.data ../source/entertainment_transactions_v7_After20161231.data\
-            | awk -F, 'BEGIN{item[$2]=0}{item[$2] = item[$2] + 1}END{for(i in item){print i, item[i]}}'"
-    result = subprocess.check_output(command, shell=True).decode('utf-8').split('\n')
-    popularity_list = [(int(i.split()[1]), i.split()[0]) for i in result if len(i.split()) == 2]
-    popularity_list.sort(reverse=True)
-    popularity_list = list(map(lambda x: x[1], popularity_list[:10]))
+    # GraphSAGE
+    _, rec_embedding = load_embedding('../graphSAGE_data/graphsage_mean_small_0.000010/rep.graphsage')
+
+    # popularity_recommendation
+    # command = "cat ../source/entertainment_transactions_v7_Before20161231.data ../source/entertainment_transactions_v7_After20161231.data\
+    #         | awk -F, 'BEGIN{item[$2]=0}{item[$2] = item[$2] + 1}END{for(i in item){print i, item[i]}}'"
+    # result = subprocess.check_output(command, shell=True).decode('utf-8').split('\n')
+    # popularity_list = [(int(i.split()[1]), i.split()[0]) for i in result if len(i.split()) == 2]
+    # popularity_list.sort(reverse=True)
+    # popularity_list = list(map(lambda x: x[1], popularity_list[:10]))
 
     # Read experiment data
     with open('./data/user_item_query.txt') as fin:
@@ -125,13 +129,13 @@ if __name__ == "__main__":
 
             print('query user:', user)
             # model_recommendation
-            # recommendation_list = recommendation(item, item_vertex_embedding, item_detail_map)
+            recommendation_list = recommendation(item, rec_embedding, item_detail_map)
 
             # random_recommendation
             # recommendation_list = random_recommendation(item, seen_events | unseen_events, item_detail_map)
 
             # popularity_recommendation
-            recommendation_list = popularity_recommendation(item, popularity_list, item_detail_map)
+            # recommendation_list = popularity_recommendation(item, popularity_list, item_detail_map)
 
             if not recommendation_list:
                 # print("No existed query embedding in training data.")
