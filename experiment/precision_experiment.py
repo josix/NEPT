@@ -101,7 +101,7 @@ if __name__ == "__main__":
     # rec_embedding = {**item_vertex_embedding, **unseen_vectex_embedding}
 
     # GraphSAGE
-    _, rec_embedding = load_embedding('../graphSAGE_data/graphsage_mean_small_0.000010/rep.graphsage')
+    _, rec_embedding = load_embedding('../graphSAGE_data/graphsage_mean_small_0.00001_256/rep.graphsage')
 
     # popularity_recommendation
     # command = "cat ../source/entertainment_transactions_v7_Before20161231.data ../source/entertainment_transactions_v7_After20161231.data\
@@ -112,7 +112,7 @@ if __name__ == "__main__":
     # popularity_list = list(map(lambda x: x[1], popularity_list[:10]))
 
     # Read experiment data
-    with open('./data/user_item_query.txt') as fin:
+    with open('./data/precision@10_1user_1item_query.txt') as fin:
         count = 0
         maching_count = 0
         total_avep = 0
