@@ -111,7 +111,7 @@ if __name__ == "__main__":
     # model case
     # hpe/mf + vsm
     user_vertex_embedding, item_vertex_embedding = load_embedding('../hpe_data/rep.hpe')
-    _, unseen_vectex_embedding = load_embedding('../unseen_data/unssen_events_rep_hpe.txt')
+    _, unseen_vectex_embedding = load_embedding('../unseen_data/unssen_events_rep_hpe(cosine_tf_weighted).txt')
     rec_embedding = {**item_vertex_embedding, **unseen_vectex_embedding}
 
     # GraphSAGE
@@ -134,10 +134,10 @@ if __name__ == "__main__":
 
             # Recommendation Model
             # model version
-            # recommendation_list = recommendation(query, rec_embedding, item_detail_map)
+            recommendation_list = recommendation(query, rec_embedding, item_detail_map)
 
             # only new event recommendated
-            recommendation_list = new_event_recommendation(query, rec_embedding, unseen_events, item_detail_map)
+            # recommendation_list = new_event_recommendation(query, rec_embedding, unseen_events, item_detail_map)
 
             # random_recommendation
             # recommendation_list = random_recommendation(query, seen_events | unseen_events, item_detail_map)
