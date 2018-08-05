@@ -96,12 +96,12 @@ if __name__ == "__main__":
 
     # model_recommendation
     # hpe/mf + vsm
-    # user_vertex_embedding, item_vertex_embedding = load_embedding('../data/rep.hpe')
-    # _, unseen_vectex_embedding = load_embedding('../unssen_events_rep.txt')
-    # rec_embedding = {**item_vertex_embedding, **unseen_vectex_embedding}
+    user_vertex_embedding, item_vertex_embedding = load_embedding('../hpe2_data/rep.hpe')
+    _, unseen_vectex_embedding = load_embedding('../unseen_data/unssen_events_rep_hpe(cosine_tf_weighted).txt')
+    rec_embedding = {**item_vertex_embedding, **unseen_vectex_embedding}
 
     # GraphSAGE
-    _, rec_embedding = load_embedding('../graphSAGE_data/graphsage_mean_small_0.00001_256/rep.graphsage')
+    # _, rec_embedding = load_embedding('../graphSAGE_data/graphsage_mean_small_0.00001_256/rep.graphsage')
 
     # popularity_recommendation
     # command = "cat ../source/entertainment_transactions_v7_Before20161231.data ../source/entertainment_transactions_v7_After20161231.data\
