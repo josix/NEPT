@@ -5,7 +5,7 @@ with open('../../hpe_data/test.data', 'rt') as fin:
     for line in fin:
         user, *item_list = line.strip().split(' ')
         item_num = len(item_list)
-        if item_num < 10: # for measuring precision@10
+        if item_num < 5: # for measuring precision@5
             continue
         # print(user)
         # print(item_list)

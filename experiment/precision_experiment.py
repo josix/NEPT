@@ -38,17 +38,19 @@ def recommendation(query, item_vertex_embedding, item_detail_map=None):
     print(item_detail_map[query])
     if query not in item_vertex_embedding: # Because the number of items for each user is too low so that not all items are embedding
         return False
-    query_embedding = item_vertex_embedding[query]
+    query_embedding = item_vertex_embedding[query][0]
     recommendation_list = []
     for item in item_vertex_embedding:
-        cosine_similarity = cosine(query_embedding, item_vertex_embedding[item])
+        cosine_similarity = cosine(query_embedding, item_vertex_embedding[item][0])
         recommendation_list.append((cosine_similarity, item))
+    # only recommendate new envent, if not comment this line
+    recommendation_list = list(filter(lambda recommendation: item_vertex_embedding[recommendation[1]][1] != "hpe", recommendation_list))
     recommendation_list.sort(reverse=True)
-    for index, recommendation in enumerate(recommendation_list[1:11]):
-        print("{} Recommendation: {}".format(index, recommendation))
+    for index, recommendation in enumerate(recommendation_list[1:6]):
+        print("{} Recommendation: {} ({})".format(index, recommendation, item_vertex_embedding[recommendation[1]][1]))
         # show detail
         print(item_detail_map[recommendation[1]])
-    return list(map(lambda x: x[1], recommendation_list[1:11]))
+    return list(map(lambda x: x[1], recommendation_list[1:6]))
 
 def cosine(v1, v2):
     numerator = 0
@@ -97,8 +99,9 @@ if __name__ == "__main__":
     # model_recommendation
     # hpe/mf + vsm
     user_vertex_embedding, item_vertex_embedding = load_embedding('../hpe2_data/rep.hpe')
-    _, unseen_vectex_embedding = load_embedding('../unseen_data/unssen_events_rep_hpe(cosine_tf_weighted).txt')
-    rec_embedding = {**item_vertex_embedding, **unseen_vectex_embedding}
+    _, unseen_vectex_embedding = load_embedding('../unseen_data/unssen_events_rep_hpe(sentence2vec_weight_angular_window_1_dm_iter10).txt')
+    rec_embedding = {**{ key:(value, 'hpe') for key, value in item_vertex_embedding.items() },
+                     **{ key:(value, 'propagation') for key, value in unseen_vectex_embedding.items()} }
 
     # GraphSAGE
     # _, rec_embedding = load_embedding('../graphSAGE_data/graphsage_mean_small_0.00001_256/rep.graphsage')
@@ -112,7 +115,7 @@ if __name__ == "__main__":
     # popularity_list = list(map(lambda x: x[1], popularity_list[:10]))
 
     # Read experiment data
-    with open('./data/precision@10_1user_1item_query.txt') as fin:
+    with open('./data/precision@5_1user_1item_query.txt') as fin:
         count = 0
         maching_count = 0
         total_avep = 0
@@ -144,9 +147,11 @@ if __name__ == "__main__":
 
             # scoring
             machingNum = len(set(recommendation_list) & set(user_watch_list[user]))
-            precision = machingNum/10
+            if machingNum:
+                print('hit eventIDs: {}'.format(set(recommendation_list) & set(user_watch_list[user])))
+            precision = machingNum/5
             recall = machingNum/len(user_watch_list[user])
-            print('precision@10: {} recall@10: {}'.format(precision, recall))
+            print('precision@5: {} recall@5: {}'.format(precision, recall))
             if recall and precision:
                 fscore = 2 / (1 / precision + 1/recall)
                 print('F1: {}'.format(fscore))
