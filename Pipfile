@@ -12,6 +12,7 @@ numpy = "*"
 scipy = "*"
 annoy = "*"
 gensim = "*"
+tqdm = "*"
 
 [dev-packages]
 

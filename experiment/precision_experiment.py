@@ -99,7 +99,7 @@ if __name__ == "__main__":
     # model_recommendation
     # hpe/mf + vsm
     user_vertex_embedding, item_vertex_embedding = load_embedding('../hpe2_data/rep.hpe')
-    _, unseen_vectex_embedding = load_embedding('../unseen_data/unssen_events_rep_hpe(sentence2vec_weight_angular_window_1_dm_iter10).txt')
+    _, unseen_vectex_embedding = load_embedding('../unseen_data/unseen_events_rep_hpe(tfidf_weight_angular_description).txt')
     rec_embedding = {**{ key:(value, 'hpe') for key, value in item_vertex_embedding.items() },
                      **{ key:(value, 'propagation') for key, value in unseen_vectex_embedding.items()} }
 
