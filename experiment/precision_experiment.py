@@ -1,7 +1,10 @@
 from collections import defaultdict
 from math import sqrt
+from itertools import combinations
 import subprocess
 import random
+
+from fuzzywuzzy import fuzz
 
 def load_events(path):
     with open(path, 'rt') as fin:
@@ -44,7 +47,7 @@ def recommendation(query, item_vertex_embedding, item_detail_map=None):
         cosine_similarity = cosine(query_embedding, item_vertex_embedding[item][0])
         recommendation_list.append((cosine_similarity, item))
     # only recommendate new envent, if not comment this line
-    recommendation_list = list(filter(lambda recommendation: item_vertex_embedding[recommendation[1]][1] != "hpe", recommendation_list))
+    recommendation_list = [recommendation for recommendation in recommendation_list if item_vertex_embedding[recommendation[1]][1] != 'hpe']
     recommendation_list.sort(reverse=True)
     for index, recommendation in enumerate(recommendation_list[1:6]):
         print("{} Recommendation: {} ({})".format(index, recommendation, item_vertex_embedding[recommendation[1]][1]))
@@ -87,7 +90,7 @@ def popularity_recommendation(query, recommendation_list, item_detail_map=None):
 if __name__ == "__main__":
     # show detail
     command = "awk -F, '{print $0 }' '../../kktix/preproecessed_data/eventDetailMap_v7.csv'"
-    result = subprocess.check_output(command, shell=True).decode('utf-8').split('\n')
+    result = subprocess.check_output(command, shell=True, encoding='utf-8').split('\n')
     item_detail_map = {i.split(',')[0]:i for i in result}
 
     user_watch_list = load_watch_list('./data/precision/user_unseen_answer.data')
@@ -119,12 +122,14 @@ if __name__ == "__main__":
         count = 0
         maching_count = 0
         total_avep = 0
+        total_ave_distance_query_to_rec = 0
+        total_ave_distance_rec_to_rec = 0
         for line in fin:
             count += 1
             # early stop
             if count == 500:
                 break
-            user, item = line.strip().split()
+            user, query_item = line.strip().split()
 
             if len(user_watch_list[user]) == 0:
                 count -= 1
@@ -132,23 +137,40 @@ if __name__ == "__main__":
 
             print('query user:', user)
             # model_recommendation
-            recommendation_list = recommendation(item, rec_embedding, item_detail_map)
+            recommendation_list = recommendation(query_item, rec_embedding, item_detail_map)
 
             # random_recommendation
-            # recommendation_list = random_recommendation(item, seen_events | unseen_events, item_detail_map)
+            # recommendation_list = random_recommendation(query_item, seen_events | unseen_events, item_detail_map)
 
             # popularity_recommendation
-            # recommendation_list = popularity_recommendation(item, popularity_list, item_detail_map)
+            # recommendation_list = popularity_recommendation(query_item, popularity_list, item_detail_map)
 
             if not recommendation_list:
                 # print("No existed query embedding in training data.")
                 count -= 1
                 continue
 
-            # scoring
+            # Edit Distance Scoring
+            edit_distance_query_to_rec = \
+                    [fuzz.ratio(item_detail_map[query_item], item_detail_map[rec_item]) for rec_item in recommendation_list]
+            ave_edit_distance_query_to_rec = sum(edit_distance_query_to_rec) / len(edit_distance_query_to_rec)
+            total_ave_distance_query_to_rec += ave_edit_distance_query_to_rec
+            print('='*20)
+            print("Levenshtein Distance:")
+            print("Average Distance (query to rec): {}".format(ave_edit_distance_query_to_rec))
+            edit_distance_rec_to_rec = \
+                    [fuzz.ratio(item_detail_map[rec_item_first], item_detail_map[rec_item_second])\
+                     for rec_item_first, rec_item_second in combinations(recommendation_list, 2)]
+            ave_edit_distance_rec_to_rec = sum(edit_distance_rec_to_rec) / len(edit_distance_rec_to_rec)
+            total_ave_distance_rec_to_rec += ave_edit_distance_rec_to_rec
+            print("Average Distance (rec to rec): {}".format(ave_edit_distance_rec_to_rec))
+
+            # Precision and Recall Scoring
+            print('='*20)
             machingNum = len(set(recommendation_list) & set(user_watch_list[user]))
             if machingNum:
                 print('hit eventIDs: {}'.format(set(recommendation_list) & set(user_watch_list[user])))
+                print('='*20)
             precision = machingNum/5
             recall = machingNum/len(user_watch_list[user])
             print('precision@5: {} recall@5: {}'.format(precision, recall))
@@ -158,8 +180,8 @@ if __name__ == "__main__":
 
                 ranked_precision = 0
                 ranked_machingNum = 0
-                for index, item in enumerate(recommendation_list):
-                    if item in user_watch_list[user]:
+                for index, rec_item in enumerate(recommendation_list):
+                    if rec_item in user_watch_list[user]:
                         ranked_machingNum += 1
                         ranked_precision += ranked_machingNum / (index + 1)
                 ave_precision = ranked_precision / ranked_machingNum
@@ -171,5 +193,7 @@ if __name__ == "__main__":
 
         print('# of queries: {}'.format(count))
         print('# of queries(precision > 0): {}'.format(maching_count))
+        print('Mean Average Edit Distance (query, recommendation): {:.2f}%'.format(total_ave_distance_query_to_rec / count))
+        print('Mean Average Edit Distance (recommendation, recommendation): {:.2f}%'.format(total_ave_distance_rec_to_rec / count))
         if maching_count:
             print('MAP: {}'.format(total_avep / maching_count))

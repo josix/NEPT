@@ -13,6 +13,8 @@ scipy = "*"
 annoy = "*"
 gensim = "*"
 tqdm = "*"
+fuzzywuzzy = "*"
+python-levenshtein = "*"
 
 [dev-packages]
 
