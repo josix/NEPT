@@ -3,6 +3,7 @@ from math import sqrt
 from itertools import combinations
 import subprocess
 import random
+import concurrent.futures as cf
 
 from fuzzywuzzy import fuzz
 
@@ -36,11 +37,7 @@ def load_embedding(path):
                 item_vertex_embedding[vertex] = [float(x) for x in embedding]
     return user_vertex_embedding, item_vertex_embedding
 
-def recommendation(query, item_vertex_embedding, item_detail_map=None):
-    print("query event:", query)
-    print(item_detail_map[query])
-    if query not in item_vertex_embedding: # Because the number of items for each user is too low so that not all items are embedding
-        return False
+def recommend(query, item_vertex_embedding):
     query_embedding = item_vertex_embedding[query][0]
     recommendation_list = []
     for item in item_vertex_embedding:
@@ -49,11 +46,7 @@ def recommendation(query, item_vertex_embedding, item_detail_map=None):
     # only recommendate new envent, if not comment this line
     recommendation_list = [recommendation for recommendation in recommendation_list if item_vertex_embedding[recommendation[1]][1] != 'hpe']
     recommendation_list.sort(reverse=True)
-    for index, recommendation in enumerate(recommendation_list[1:6]):
-        print("{} Recommendation: {} ({})".format(index, recommendation, item_vertex_embedding[recommendation[1]][1]))
-        # show detail
-        print(item_detail_map[recommendation[1]])
-    return list(map(lambda x: x[1], recommendation_list[1:6]))
+    return (query, list(map(lambda x: x[1], recommendation_list[1:6])))
 
 def cosine(v1, v2):
     numerator = 0
@@ -86,6 +79,15 @@ def popularity_recommendation(query, recommendation_list, item_detail_map=None):
         print(item_detail_map[recommendation])
     return recommendation_list
 
+def query_gen(user_watch_list, item_vertex_embedding, fp):
+    # Filtering query list
+    with open(fp) as fin:
+        for line in fin:
+            user, query_item = line.strip().split()
+            if user_watch_list[user] == [] or query_item not in item_vertex_embedding:
+                continue
+            yield user, query_item
+
 
 if __name__ == "__main__":
     # show detail
@@ -102,7 +104,7 @@ if __name__ == "__main__":
     # model_recommendation
     # hpe/mf + vsm
     user_vertex_embedding, item_vertex_embedding = load_embedding('../hpe2_data/rep.hpe')
-    _, unseen_vectex_embedding = load_embedding('../unseen_data/unseen_events_rep_hpe(tfidf_weight_angular_description).txt')
+    _, unseen_vectex_embedding = load_embedding('../unseen_data/unssen_events_rep_hpe(cc2vec_weight_angular).txt')
     rec_embedding = {**{ key:(value, 'hpe') for key, value in item_vertex_embedding.items() },
                      **{ key:(value, 'propagation') for key, value in unseen_vectex_embedding.items()} }
 
@@ -117,38 +119,34 @@ if __name__ == "__main__":
     # popularity_list.sort(reverse=True)
     # popularity_list = list(map(lambda x: x[1], popularity_list[:10]))
 
-    # Read experiment data
-    with open('./data/precision@5_1user_1item_query.txt') as fin:
+    # random_recommendation
+    # recommendation_list = random_recommendation(query_item, seen_events | unseen_events, item_detail_map)
+
+    # popularity_recommendation
+    # recommendation_list = popularity_recommendation(query_item, popularity_list, item_detail_map)
+
+    # model_recommendation
+    with cf.ProcessPoolExecutor(max_workers=4) as executor:
+        future_to_user =\
+                {executor.submit(recommend, query, rec_embedding) : user
+                for index, (user, query) in enumerate(query_gen(user_watch_list, rec_embedding, './data/precision@5_1user_1item_query.txt'))
+                if index <= 499}
+
         count = 0
         maching_count = 0
         total_avep = 0
         total_ave_distance_query_to_rec = 0
         total_ave_distance_rec_to_rec = 0
-        for line in fin:
+        for future in cf.as_completed(future_to_user):
             count += 1
-            # early stop
-            if count == 500:
-                break
-            user, query_item = line.strip().split()
-
-            if len(user_watch_list[user]) == 0:
-                count -= 1
-                continue
-
-            print('query user:', user)
-            # model_recommendation
-            recommendation_list = recommendation(query_item, rec_embedding, item_detail_map)
-
-            # random_recommendation
-            # recommendation_list = random_recommendation(query_item, seen_events | unseen_events, item_detail_map)
-
-            # popularity_recommendation
-            # recommendation_list = popularity_recommendation(query_item, popularity_list, item_detail_map)
-
-            if not recommendation_list:
-                # print("No existed query embedding in training data.")
-                count -= 1
-                continue
+            user = future_to_user[future]
+            query_item, recommendation_list = future.result()
+            print('query event:', query_item)
+            print(item_detail_map[query_item])
+            for index, recommendation in enumerate(recommendation_list):
+                print("{} Recommendation: {}".format(index, recommendation))
+                # show detail
+                print(item_detail_map[recommendation])
 
             # Edit Distance Scoring
             edit_distance_query_to_rec = \
@@ -191,9 +189,9 @@ if __name__ == "__main__":
             else:
                 print()
 
-        print('# of queries: {}'.format(count))
-        print('# of queries(precision > 0): {}'.format(maching_count))
-        print('Mean Average Edit Distance (query, recommendation): {:.2f}%'.format(total_ave_distance_query_to_rec / count))
-        print('Mean Average Edit Distance (recommendation, recommendation): {:.2f}%'.format(total_ave_distance_rec_to_rec / count))
-        if maching_count:
-            print('MAP: {}'.format(total_avep / maching_count))
+    print('# of queries: {}'.format(count))
+    print('# of queries(precision > 0): {}'.format(maching_count))
+    print('Mean Average Edit Distance (query, recommendation): {:.2f}%'.format(total_ave_distance_query_to_rec / count))
+    print('Mean Average Edit Distance (recommendation, recommendation): {:.2f}%'.format(total_ave_distance_rec_to_rec / count))
+    if maching_count:
+        print('MAP: {}'.format(total_avep / maching_count))
