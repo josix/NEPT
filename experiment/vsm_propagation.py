@@ -31,8 +31,9 @@ def vsm(fp=CORPUS_FILE):
         item_tags_dict = json.load(json_file_in)
         index_id_dict = {}
         corpus = []
-        for index, (id_key, value) in enumerate(item_tags_dict.items()):
-            corpus.append(" ".join(value))
+        for index, (id_key, tags) in enumerate(item_tags_dict.items()):
+            sentence = [tag for tag, weight in tags]
+            corpus.append(" ".join(sentence))
             index_id_dict[index] = id_key
         vectorizer = TfidfVectorizer()
         document_term_matrix = vectorizer.fit_transform(corpus)
@@ -94,8 +95,8 @@ def load_unseen(fp=UNSEEN_EVENTS_FILE):
             splitted_line = line.strip().split(',')
             if len(splitted_line) == 1:
                 continue
-            id_, title = splitted_line
-            unseen_dict[id_] = title
+            id_, title, description = splitted_line
+            unseen_dict[id_] = (title, description)
         return unseen_dict
 
 
@@ -103,14 +104,15 @@ if __name__ == "__main__":
     IDS_DICT, TRAINED_MODEL, DOC_MATRIX = vsm()
     UNSEEN_DICT = load_unseen()
     UNSEEN_EMBEDDING_DICT = {}
-    for id_, title_string in UNSEEN_DICT.items():
+    for id_, (title_string, description) in UNSEEN_DICT.items():
         print('unssenId:', id_)
+        query_string = title_string + description
         ID_LIST =\
-            closest_topK(title_string, IDS_DICT, TRAINED_MODEL, DOC_MATRIX.shape[1])
+            closest_topK(query_string, IDS_DICT, TRAINED_MODEL, DOC_MATRIX.shape[1])
         print(ID_LIST)
         UNSEEN_EMBEDDING_DICT[id_] = embedding_propgation(ID_LIST, weight_func=lambda x : 1 / ((acos(x / -2 + 1) * 180 / pi) ** 2) if x != 0 else 1)
         print()
-    with open('unssen_events_rep_hpe(tfidf_degWeight_angular).txt', 'wt') as fout:
+    with open('unssen_events_rep_hpe(tfidf_2018unseen).txt', 'wt') as fout:
         fout.write("{}\n".format(len(UNSEEN_EMBEDDING_DICT)))
         for id_, embedding in UNSEEN_EMBEDDING_DICT.items():
             fout.write("{} {}\n".format(id_, ' '.join(map(lambda x:str(round(x, 6)),embedding))))
