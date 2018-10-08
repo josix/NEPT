@@ -34,7 +34,10 @@ if __name__ == "__main__":
     with open(OUTPUT, 'wt') as fout:
         with open(USER_LOG, 'rt') as fin:
             for line in fin:
-                user, *items = line.strip().split(' ')
-                for item in items:
-                    for word, weight in event_keywords[item]:
-                        fout.write('u{} {} {}\n'.format(user, word_id_mapping[word], weight))
+                user, item, user_item_weight = line.strip().split(' ')
+                try:
+                    for word, textrank_weight in event_keywords[item]:
+                        weight = textrank_weight * int(user_item_weight)
+                        fout.write('{} {} {}\n'.format(user, word_id_mapping[word], weight))
+                except KeyError:
+                    continue

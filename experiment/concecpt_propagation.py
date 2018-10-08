@@ -7,6 +7,7 @@ import argparse
 import jieba
 import jieba.analyse
 from annoy import AnnoyIndex
+from gensim.models import word2vec
 
 PARSER = argparse.ArgumentParser()
 PARSER.add_argument("unseen_event_file",
@@ -29,6 +30,10 @@ CONCEPT_FOLDER = ARGS.concept_folder
 jieba.set_dictionary("./jieba-zh_TW/jieba/dict.txt")
 MAX_EPOCHS = 10
 SIZE = 128
+try:
+    MODEL = word2vec.Word2Vec.load(CONCEPT_FOLDER+"/word2vec.model")
+except FileNotFoundError:
+    MODEL = None
 def concept_combine(concept_embedding, concept_mapping, fp=CORPUS_FILE):
     with open(fp, 'r') as json_file_in:
         item_tags_dict = json.load(json_file_in)
@@ -57,7 +62,10 @@ def closest_topK(unseen_event, concept_embedding, concept_mapping, dim, topK=10)
     concept_mapping: {word_id : word_string}
     """
     unseen_event_title_tags = jieba.analyse.extract_tags(unseen_event[0])
-    unseen_event_description_words = jieba.analyse.textrank(unseen_event[1], topK=10, withWeight=False, allowPOS=('ns', 'n'))
+    if not MODEL:
+        unseen_event_description_words = jieba.analyse.textrank(unseen_event[1], topK=10, withWeight=False, allowPOS=('ns', 'n'))
+    else:
+        unseen_event_description_words = jieba.analyse.textrank_similarity(unseen_event[1], topK=10, withWeight=False, allowPOS=('ns', 'n'), word_embedding=MODEL)
     print('title words:', unseen_event_title_tags)
     print('description words:', unseen_event_description_words)
     event_concept_embeddings = []
@@ -119,7 +127,7 @@ def load_unseen(fp=UNSEEN_EVENTS_FILE):
 
 def load_concept(fp=CONCEPT_FOLDER):
     embedding = {}
-    with open(CONCEPT_FOLDER + '/rep_textrank_weight.line2') as fin:
+    with open(CONCEPT_FOLDER + '/rep.line2') as fin:
         fin.readline()
         for line in fin:
             id_, *vector = line.strip().split()
@@ -143,7 +151,7 @@ if __name__ == "__main__":
         print(ID_LIST)
         UNSEEN_EMBEDDING_DICT[id_] = embedding_propgation(ID_LIST, weight_func=lambda x: 1 / (0.00001 + x))
         print()
-    with open('unssen_events_rep_hpe(cc2vec_weight_angular_description).txt', 'wt') as fout:
+    with open('unseen_events_rep_hpe(textrank_similarity).txt', 'wt') as fout:
         fout.write("{}\n".format(len(UNSEEN_EMBEDDING_DICT)))
         for id_, embedding in UNSEEN_EMBEDDING_DICT.items():
             fout.write("{} {}\n".format(id_, ' '.join(map(lambda x:str(round(x, 6)),embedding))))
