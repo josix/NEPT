@@ -7,3 +7,4 @@ sample/*
 source
 *.lock
 */result/*
+script/textrank_similarity.py

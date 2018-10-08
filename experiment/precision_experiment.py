@@ -4,6 +4,7 @@ from itertools import combinations
 import subprocess
 import random
 import concurrent.futures as cf
+import sys
 
 from fuzzywuzzy import fuzz
 
@@ -21,7 +22,10 @@ def load_watch_list(path):
     with open(path, 'rt') as fin:
         for line in fin:
             user, *items = line.strip().split()
-            user_watch_list["u"+user] += items
+            if user[0] == "u":
+                user_watch_list[user[1:]] += items
+            else:
+                user_watch_list[user] += items
     return user_watch_list
 
 def load_embedding(path):
@@ -41,7 +45,13 @@ def recommend(query, item_vertex_embedding):
     query_embedding = item_vertex_embedding[query][0]
     recommendation_list = []
     for item in item_vertex_embedding:
-        cosine_similarity = cosine(query_embedding, item_vertex_embedding[item][0])
+        try:
+            cosine_similarity = cosine(query_embedding, item_vertex_embedding[item][0])
+        except ZeroDivisionError:
+            print("ERROR ZeroDivisionError: ")
+            print(query, item)
+            print(query_embedding, item_vertex_embedding[item][0])
+            sys.exit()
         recommendation_list.append((cosine_similarity, item))
     # only recommendate new envent, if not comment this line
     recommendation_list = [recommendation for recommendation in recommendation_list if item_vertex_embedding[recommendation[1]][1] != 'hpe']
@@ -91,11 +101,13 @@ def query_gen(user_watch_list, item_vertex_embedding, fp):
 
 if __name__ == "__main__":
     # show detail
-    command = "awk -F, '{print $0 }' '../../kktix/preproecessed_data/eventDetailMap_v7.csv'"
+    command = "awk -F, '{print $0 }' '../../kktix/preproecessed_data/eventDetailMap_v7.csv' '../../kktix/preproecessed_data/eventDetailMap_20180903.csv' '../../kktix/preproecessed_data/eventDetailMap_20180523.csv'"
     result = subprocess.check_output(command, shell=True, encoding='utf-8').split('\n')
-    item_detail_map = {i.split(',')[0]:i for i in result}
+    item_detail_map = defaultdict(lambda: "No corresponding metadata in entertainment_events_*.csv")
+    for i in result:
+        item_detail_map[i.split(',')[0]] = i
 
-    user_watch_list = load_watch_list('./data/precision/user_unseen_answer.data')
+    user_watch_list = load_watch_list('./data/precision/transaction_future_answer.data')
 
     # random recommendation
     # seen_events = load_events('../source/entertainment_transactions_v7_Before20161231.data')
@@ -103,8 +115,8 @@ if __name__ == "__main__":
 
     # model_recommendation
     # hpe/mf + vsm
-    user_vertex_embedding, item_vertex_embedding = load_embedding('../hpe2_data/rep.hpe')
-    _, unseen_vectex_embedding = load_embedding('../unseen_data/unssen_events_rep_hpe(cc2vec_weight_angular).txt')
+    user_vertex_embedding, item_vertex_embedding = load_embedding('../log_data/rep.hpe')
+    _, unseen_vectex_embedding = load_embedding('../log_transaction_data/unseen_data/unseen_events_rep_hpe(textrank_similarity).txt')
     rec_embedding = {**{ key:(value, 'hpe') for key, value in item_vertex_embedding.items() },
                      **{ key:(value, 'propagation') for key, value in unseen_vectex_embedding.items()} }
 
@@ -129,7 +141,7 @@ if __name__ == "__main__":
     with cf.ProcessPoolExecutor(max_workers=4) as executor:
         future_to_user =\
                 {executor.submit(recommend, query, rec_embedding) : user
-                for index, (user, query) in enumerate(query_gen(user_watch_list, rec_embedding, './data/precision@5_1user_1item_query.txt'))
+                for index, (user, query) in enumerate(query_gen(user_watch_list, rec_embedding, './data/precision@5_1user_1item_transaction_future_query.txt'))
                 if index <= 499}
 
         count = 0
@@ -137,16 +149,26 @@ if __name__ == "__main__":
         total_avep = 0
         total_ave_distance_query_to_rec = 0
         total_ave_distance_rec_to_rec = 0
+        total_rec_num = 0
+        seen_query = set()
+        all_recommendation_set = set()
         for future in cf.as_completed(future_to_user):
             count += 1
             user = future_to_user[future]
             query_item, recommendation_list = future.result()
+            print('user:', user)
             print('query event:', query_item)
             print(item_detail_map[query_item])
             for index, recommendation in enumerate(recommendation_list):
                 print("{} Recommendation: {}".format(index, recommendation))
                 # show detail
                 print(item_detail_map[recommendation])
+
+            # Coverage Scoring
+            all_recommendation_set = all_recommendation_set | set(recommendation_list)
+            if query_item not in seen_query:
+                seen_query.add(query_item)
+                total_rec_num += len(recommendation_list)
 
             # Edit Distance Scoring
             edit_distance_query_to_rec = \
@@ -193,5 +215,6 @@ if __name__ == "__main__":
     print('# of queries(precision > 0): {}'.format(maching_count))
     print('Mean Average Edit Distance (query, recommendation): {:.2f}%'.format(total_ave_distance_query_to_rec / count))
     print('Mean Average Edit Distance (recommendation, recommendation): {:.2f}%'.format(total_ave_distance_rec_to_rec / count))
+    print('Coverage Rate: {}'.format(len(all_recommendation_set) / total_rec_num))
     if maching_count:
         print('MAP: {}'.format(total_avep / maching_count))
