@@ -6,8 +6,12 @@ import json
 import argparse
 import jieba
 import jieba.analyse
+from jieba import analyse
 from annoy import AnnoyIndex
 from gensim.models import word2vec
+from gensim.models.doc2vec import Doc2Vec
+from sklearn.metrics.pairwise import cosine_similarity
+
 
 PARSER = argparse.ArgumentParser()
 PARSER.add_argument("unseen_event_file",
@@ -31,9 +35,15 @@ jieba.set_dictionary("./jieba-zh_TW/jieba/dict.txt")
 MAX_EPOCHS = 10
 SIZE = 128
 try:
-    MODEL = word2vec.Word2Vec.load(CONCEPT_FOLDER+"/word2vec.model")
+    print('load doc2vec model')
+    MODEL = Doc2Vec.load(CONCEPT_FOLDER+"/doc2vec.model")
 except FileNotFoundError:
     MODEL = None
+# try:
+#     print('load word2vec model')
+#     MODEL = word2vec.Word2Vec.load(CONCEPT_FOLDER+"/word2vec.model")
+# except FileNotFoundError:
+#     MODEL = None
 def concept_combine(concept_embedding, concept_mapping, fp=CORPUS_FILE):
     with open(fp, 'r') as json_file_in:
         item_tags_dict = json.load(json_file_in)
@@ -55,6 +65,31 @@ def concept_combine(concept_embedding, concept_mapping, fp=CORPUS_FILE):
         annoy_index.save('cc2vec.ann')
         return event_vec
 
+def textrank_getkeywords(paragraph):
+    if not MODEL:
+        return jieba.analyse.textrank(paragraph, topK=10, withWeight=False, allowPOS=('ns', 'n'))
+    else:
+        return jieba.analyse.textrank_similarity(paragraph, topK=10, withWeight=False, allowPOS=('ns', 'n'), word_embedding=MODEL)
+
+def embedrank_getkeywords(paragraph, withWeight=False) -> list:
+    '''Return a list[(word, weight)] or list[word] '''
+    textrank = analyse.TextRank()
+    textrank.pos_filt = frozenset(('ns', 'n'))
+    words = set()
+    for word_pair in textrank.tokenizer.cut(paragraph):
+        if textrank.pairfilter(word_pair):
+            words.add(word_pair.word)
+    doc_vec = MODEL.infer_vector(words)
+    candidate_keywords = []
+    for word in words:
+        word_vec = MODEL.infer_vector(word)
+        candidate_keywords.append((word, float(cosine_similarity([word_vec], [doc_vec])[0][0])))
+    candidate_keyword = sorted(candidate_keywords, key=lambda x: x[1], reverse=True)
+    if withWeight:
+        return candidate_keywords[:10]
+    else:
+        return [word for word, weight in candidate_keyword[:10]]
+
 def closest_topK(unseen_event, concept_embedding, concept_mapping, dim, topK=10):
     """
     unseen_event: (title: str, description: str)
@@ -62,10 +97,10 @@ def closest_topK(unseen_event, concept_embedding, concept_mapping, dim, topK=10)
     concept_mapping: {word_id : word_string}
     """
     unseen_event_title_tags = jieba.analyse.extract_tags(unseen_event[0])
-    if not MODEL:
-        unseen_event_description_words = jieba.analyse.textrank(unseen_event[1], topK=10, withWeight=False, allowPOS=('ns', 'n'))
-    else:
-        unseen_event_description_words = jieba.analyse.textrank_similarity(unseen_event[1], topK=10, withWeight=False, allowPOS=('ns', 'n'), word_embedding=MODEL)
+
+    # unseen_event_description_words = textrank_getkeywords(unseen_event[1])
+    unseen_event_description_words = embedrank_getkeywords(unseen_event[1])
+
     print('title words:', unseen_event_title_tags)
     print('description words:', unseen_event_description_words)
     event_concept_embeddings = []
@@ -133,7 +168,7 @@ def load_concept(fp=CONCEPT_FOLDER):
             id_, *vector = line.strip().split()
             embedding[id_] = [ float(value) for value in vector]
     word_id_mapping = {}
-    with open(CONCEPT_FOLDER + '/textrank_mapping.txt') as fin:
+    with open(CONCEPT_FOLDER + '/embedrank_mapping.txt') as fin:
         for line in fin:
             word_id, word = line.strip().split(',')
             word_id_mapping[word] = word_id
@@ -151,7 +186,7 @@ if __name__ == "__main__":
         print(ID_LIST)
         UNSEEN_EMBEDDING_DICT[id_] = embedding_propgation(ID_LIST, weight_func=lambda x: 1 / (0.00001 + x))
         print()
-    with open('unseen_events_rep_hpe(textrank_similarity).txt', 'wt') as fout:
+    with open('unseen_events_rep_hpe(embedrank_binary_weight).txt', 'wt') as fout:
         fout.write("{}\n".format(len(UNSEEN_EMBEDDING_DICT)))
         for id_, embedding in UNSEEN_EMBEDDING_DICT.items():
             fout.write("{} {}\n".format(id_, ' '.join(map(lambda x:str(round(x, 6)),embedding))))
