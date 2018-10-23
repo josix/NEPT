@@ -11,6 +11,7 @@ eg:
 '''
 import argparse
 import json
+import pickle as pickle
 
 from jieba import analyse
 import jieba
@@ -61,7 +62,7 @@ def word2vec_train(filepath: str):
         model.save(OUTPUT+'.model')
         return model.wv
 
-def event_title_cut(filepath: str, word_vector=None) -> dict:
+def event_title_cut(filepath: str, word_vector=None, tfidf=None) -> dict:
     '''Return a dict{event_id: [words]} '''
     tag_dict = dict()
     jieba.set_dictionary("./jieba-zh_TW/jieba/dict.txt")
@@ -73,13 +74,16 @@ def event_title_cut(filepath: str, word_vector=None) -> dict:
             tag_dict[int(event_id)] = [
                     *title_tags,
                     # *jieba.analyse.textrank(event_description, topK=10, withWeight=True, allowPOS=('ns', 'n')),
-                    *jieba.analyse.textrank_similarity(event_description, topK=10, withWeight=True, allowPOS=('ns', 'n'), word_embedding=word_vector),
+                    # *jieba.analyse.textrank_similarity(event_description, topK=10, withWeight=True, allowPOS=('ns', 'n'), word_embedding=word_vector),
+                    *jieba.analyse.textrank_vsm(event_description, topK=10, withWeight=True, allowPOS=('ns', 'n'), vsm=tfidf),
                     ]
     return tag_dict
 if __name__ == "__main__":
     # WORD2VEC = word2vec_train(FILEPATH)
     WORD2VEC = None
-    EVENT_TITLE_TAG_DICT = event_title_cut(FILEPATH, WORD2VEC)
+    IDF = pickle.load(open(OUTPUT+"/vsm_model.pickle", 'rb'))
+    # IDF = None
+    EVENT_TITLE_TAG_DICT = event_title_cut(FILEPATH, tfidf=IDF, word_vector=None)
     with open(OUTPUT+".json", 'w', encoding='utf-8') as json_file:
         json.dump(EVENT_TITLE_TAG_DICT,
                   json_file,

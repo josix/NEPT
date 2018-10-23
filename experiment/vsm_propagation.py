@@ -4,6 +4,7 @@ to the unseen item entity.
 """
 import json
 import argparse
+import pickle as pickle
 from math import pi, acos
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
@@ -102,6 +103,7 @@ def load_unseen(fp=UNSEEN_EVENTS_FILE):
 
 if __name__ == "__main__":
     IDS_DICT, TRAINED_MODEL, DOC_MATRIX = vsm()
+    pickle.dump(TRAINED_MODEL, open('vsm_model.pickle', 'wb'))
     UNSEEN_DICT = load_unseen()
     UNSEEN_EMBEDDING_DICT = {}
     for id_, (title_string, description) in UNSEEN_DICT.items():
