@@ -4,6 +4,7 @@ to the unseen item entity.
 """
 import json
 import argparse
+import pickle as pickle
 import jieba
 import jieba.analyse
 from jieba import analyse
@@ -34,6 +35,7 @@ CONCEPT_FOLDER = ARGS.concept_folder
 jieba.set_dictionary("./jieba-zh_TW/jieba/dict.txt")
 MAX_EPOCHS = 10
 SIZE = 128
+# Switch embedrank, textrank_w2v, textrank_vsm
 try:
     print('load doc2vec model')
     MODEL = Doc2Vec.load(CONCEPT_FOLDER+"/doc2vec.model")
@@ -42,6 +44,11 @@ except FileNotFoundError:
 # try:
 #     print('load word2vec model')
 #     MODEL = word2vec.Word2Vec.load(CONCEPT_FOLDER+"/word2vec.model")
+# except FileNotFoundError:
+#     MODEL = None
+# try:
+#     print('load vsm ')
+#     MODEL = pickle.load(open(CONCEPT_FOLDER+"/vsm_model.pickle", 'rb'))
 # except FileNotFoundError:
 #     MODEL = None
 def concept_combine(concept_embedding, concept_mapping, fp=CORPUS_FILE):
@@ -69,7 +76,8 @@ def textrank_getkeywords(paragraph):
     if not MODEL:
         return jieba.analyse.textrank(paragraph, topK=10, withWeight=False, allowPOS=('ns', 'n'))
     else:
-        return jieba.analyse.textrank_similarity(paragraph, topK=10, withWeight=False, allowPOS=('ns', 'n'), word_embedding=MODEL)
+        # return jieba.analyse.textrank_similarity(paragraph, topK=10, withWeight=False, allowPOS=('ns', 'n'), word_embedding=MODEL)
+        return jieba.analyse.textrank_vsm(paragraph, topK=10, withWeight=False, allowPOS=('ns', 'n'), vsm=MODEL)
 
 def embedrank_getkeywords(paragraph, withWeight=False) -> list:
     '''Return a list[(word, weight)] or list[word] '''
@@ -98,6 +106,7 @@ def closest_topK(unseen_event, concept_embedding, concept_mapping, dim, topK=10)
     """
     unseen_event_title_tags = jieba.analyse.extract_tags(unseen_event[0])
 
+    # Switch textrank or embedrank
     # unseen_event_description_words = textrank_getkeywords(unseen_event[1])
     unseen_event_description_words = embedrank_getkeywords(unseen_event[1])
 
@@ -168,7 +177,7 @@ def load_concept(fp=CONCEPT_FOLDER):
             id_, *vector = line.strip().split()
             embedding[id_] = [ float(value) for value in vector]
     word_id_mapping = {}
-    with open(CONCEPT_FOLDER + '/embedrank_mapping.txt') as fin:
+    with open(CONCEPT_FOLDER + '/embedrank_mapping.txt') as fin: # Switch textrank or embedrank
         for line in fin:
             word_id, word = line.strip().split(',')
             word_id_mapping[word] = word_id
@@ -186,7 +195,7 @@ if __name__ == "__main__":
         print(ID_LIST)
         UNSEEN_EMBEDDING_DICT[id_] = embedding_propgation(ID_LIST, weight_func=lambda x: 1 / (0.00001 + x))
         print()
-    with open('unseen_events_rep_hpe(embedrank_binary_weight).txt', 'wt') as fout:
+    with open('unseen_events_rep_hpe(embedrank_max_count_weight).txt', 'wt') as fout:
         fout.write("{}\n".format(len(UNSEEN_EMBEDDING_DICT)))
         for id_, embedding in UNSEEN_EMBEDDING_DICT.items():
             fout.write("{} {}\n".format(id_, ' '.join(map(lambda x:str(round(x, 6)),embedding))))

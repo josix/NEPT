@@ -115,13 +115,13 @@ if __name__ == "__main__":
 
     # model_recommendation
     # hpe/mf + vsm
-    user_vertex_embedding, item_vertex_embedding = load_embedding('../log_data/rep.hpe')
-    _, unseen_vectex_embedding = load_embedding('../log_transaction_data/unseen_data/unseen_events_rep_hpe(embedrank).txt')
+    user_vertex_embedding, item_vertex_embedding = load_embedding('../log_transaction_data/rep.hpe')
+    _, unseen_vectex_embedding = load_embedding('../log_transaction_data/unseen_data/unseen_events_rep_hpe(embedrank_max_count_weight).txt')
 
-    # _, unseen_vectex_embedding_rank = load_embedding('../log_transaction_data/unseen_data/unseen_events_rep_hpe(embedrank).txt')
+    # _, unseen_vectex_embedding_rank = load_embedding('../log_transaction_data/unseen_data/unseen_events_rep_hpe(textrank_vsm).txt')
     # _, unseen_vectex_embedding_tfidf = load_embedding('../log_transaction_data/unseen_data/unssen_events_rep_hpe(tfidf_2018unseen).txt')
     # unseen_vectex_embedding = \
-    #     {key : unseen_vectex_embedding_rank[key] + unseen_vectex_embedding_tfid[key]
+    #     {key : unseen_vectex_embedding_rank[key] + unseen_vectex_embedding_tfidf[key]
     #         for key in unseen_vectex_embedding_rank.keys()}
     rec_embedding = {**{ key:(value, 'hpe') for key, value in item_vertex_embedding.items() },
                      **{ key:(value, 'propagation') for key, value in unseen_vectex_embedding.items()} }

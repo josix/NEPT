@@ -12,6 +12,7 @@ eg:
 import argparse
 import json
 import os.path
+from collections import defaultdict
 
 from jieba import analyse
 import jieba
@@ -43,7 +44,7 @@ OUTPUT = ARGS.output
 
 MAX_EPOCHS = 10
 SIZE = 64
-def doc2vec_train(filepath: str):
+def doc2vec_train(filepath: str, max_count=3):
     '''
     Return a Doc2VecKeyedVectors
     '''
@@ -57,8 +58,11 @@ def doc2vec_train(filepath: str):
             event_id, *event_description_list = line.strip().split(',')
             event_description = " ".join(event_description_list)
             document = []
-            for word_pair in textrank.tokenizer.cut(event_description):
-                if textrank.pairfilter(word_pair):
+            word_pair_to_count = defaultdict(int)
+            cut_result = list(textrank.tokenizer.cut(event_description))
+            for word_pair in cut_result:
+                word_pair_to_count[word_pair] += cut_result.count(word_pair)
+                if textrank.pairfilter(word_pair) and word_pair_to_count[word_pair] <= max_count:
                     document.append(word_pair.word)
             document_to_words[event_id] = list(set(document))
             paragraphs.append(TaggedDocument(words=document, tags=[event_id]))
@@ -67,7 +71,7 @@ def doc2vec_train(filepath: str):
                 min_count=0,
                 vector_size=SIZE,
                 window=3,
-                dbow_words=0,
+                dbow_words=1,
                 dm=1,
                 dm_concat=1,
                 alpha=0.025,
