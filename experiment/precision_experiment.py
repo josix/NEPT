@@ -2,6 +2,7 @@ from collections import defaultdict
 from math import sqrt
 from itertools import combinations
 import subprocess
+import pickle as pickle
 import random
 import concurrent.futures as cf
 import sys
@@ -115,14 +116,14 @@ if __name__ == "__main__":
 
     # model_recommendation
     # hpe/mf + vsm
-    user_vertex_embedding, item_vertex_embedding = load_embedding('../log_transaction_data/rep.hpe')
-    _, unseen_vectex_embedding = load_embedding('../log_transaction_data/unseen_data/unseen_events_rep_hpe(embedrank_max_count_weight).txt')
+    user_vertex_embedding, item_vertex_embedding = load_embedding('../hpe2_data/rep.hpe')
+    # _, unseen_vectex_embedding = load_embedding('../log_transaction_data/unseen_data/unseen_events_rep_hpe(texttrank_idf).txt')
 
-    # _, unseen_vectex_embedding_rank = load_embedding('../log_transaction_data/unseen_data/unseen_events_rep_hpe(textrank_vsm).txt')
-    # _, unseen_vectex_embedding_tfidf = load_embedding('../log_transaction_data/unseen_data/unssen_events_rep_hpe(tfidf_2018unseen).txt')
-    # unseen_vectex_embedding = \
-    #     {key : unseen_vectex_embedding_rank[key] + unseen_vectex_embedding_tfidf[key]
-    #         for key in unseen_vectex_embedding_rank.keys()}
+    _, unseen_vectex_embedding_rank = load_embedding('../log_transaction_data/unseen_data/unssen_events_rep_hpe(tfidf_2018unseen).txt')
+    _, unseen_vectex_embedding_tfidf = load_embedding('../log_transaction_data/unseen_data/unseen_events_rep_hpe(textrank_cooccurence).txt')
+    unseen_vectex_embedding = \
+        {key : unseen_vectex_embedding_rank[key] + unseen_vectex_embedding_tfidf[key]
+            for key in unseen_vectex_embedding_rank.keys()}
     rec_embedding = {**{ key:(value, 'hpe') for key, value in item_vertex_embedding.items() },
                      **{ key:(value, 'propagation') for key, value in unseen_vectex_embedding.items()} }
 
@@ -147,7 +148,7 @@ if __name__ == "__main__":
     with cf.ProcessPoolExecutor(max_workers=4) as executor:
         future_to_user =\
                 {executor.submit(recommend, query, rec_embedding) : user
-                for index, (user, query) in enumerate(query_gen(user_watch_list, rec_embedding, './data/precision@5_1user_1item_transaction_future_query.txt'))
+                for index, (user, query) in enumerate(query_gen(user_watch_list, rec_embedding, './data/precision@5_1user_1item_top300_popular_query_2018.txt'))
                 if index <= 499}
 
         count = 0
@@ -157,6 +158,7 @@ if __name__ == "__main__":
         total_ave_distance_rec_to_rec = 0
         total_rec_num = 0
         seen_query = set()
+        cases_to_result = {}
         all_recommendation_set = set()
         for future in cf.as_completed(future_to_user):
             count += 1
@@ -200,6 +202,12 @@ if __name__ == "__main__":
             precision = machingNum/5
             recall = machingNum/len(user_watch_list[user])
             print('precision@5: {} recall@5: {}'.format(precision, recall))
+            cases_to_result[(user, query_item)] = {
+                    'precision': precision,
+                    'recall': recall,
+                    'iter_result_distance': ave_edit_distance_rec_to_rec,
+                    'result_query_distance': ave_edit_distance_query_to_rec,
+                    }
             if recall and precision:
                 fscore = 2 / (1 / precision + 1/recall)
                 print('F1: {}'.format(fscore))
@@ -216,6 +224,9 @@ if __name__ == "__main__":
                 print('AvePrecision: {}\n'.format(ave_precision))
             else:
                 print()
+
+    with open('./result/precision@5_2018_transaction_top300_popular_queries_only_new/log_transaction/tfidf_concat_textrank_cooccurrence.pickle', 'wb') as fout:
+        pickle.dump(cases_to_result, fout)
 
     print('# of queries: {}'.format(count))
     print('# of queries(precision > 0): {}'.format(maching_count))
