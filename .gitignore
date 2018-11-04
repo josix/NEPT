@@ -8,3 +8,4 @@ source
 *.lock
 */result/*
 script/textrank_*.py
+./experiment/graphsage_propagation/*
