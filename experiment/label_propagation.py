@@ -65,7 +65,7 @@ elif ARGS.textrank_idf:
     except FileNotFoundError:
         pass
 
-def concept_combine(concept_embedding, concept_mapping, fp=CORPUS_FILE):
+def gen_event_lbl_emb(concept_embedding, concept_mapping, fp=CORPUS_FILE):
     with open(fp, 'r') as json_file_in:
         item_tags_dict = json.load(json_file_in)
         corpus = []
@@ -81,7 +81,9 @@ def concept_combine(concept_embedding, concept_mapping, fp=CORPUS_FILE):
                 if event_concept_embeddings == []:
                     continue
                 event_vec[id_key] = [sum(value) / len(value) for value in  zip(*event_concept_embeddings)]
+                # call spotify annoy
                 annoy_index.add_item(int(id_key), event_vec[id_key])
+        # For K-nearest neighbor retrieval
         annoy_index.build(10) # 10 trees
         annoy_index.save('cc2vec.ann')
         return event_vec
@@ -205,7 +207,7 @@ def load_concept(fp=CONCEPT_FOLDER):
 
 if __name__ == "__main__":
     CONCEPT_EMBEDDING, CONCEPT_ID_MAPPING = load_concept()
-    TITLE_CC2VEC = concept_combine(CONCEPT_EMBEDDING, CONCEPT_ID_MAPPING)
+    event_to_label_emb = gen_event_lbl_emb(CONCEPT_EMBEDDING, CONCEPT_ID_MAPPING)
     UNSEEN_DICT = load_unseen()
     UNSEEN_EMBEDDING_DICT = {}
     for id_, content in UNSEEN_DICT.items():
