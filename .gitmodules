@@ -4,6 +4,6 @@
 [submodule "proNet-core"]
 	path = proNet-core
 	url = https://github.com/cnclabs/proNet-core.git
-#[submodule "GraphSAGE"]
-#	path = GraphSAGE
-#	url = https://github.com/williamleif/GraphSAGE.git
+[submodule "GraphSAGE"]
+	path = GraphSAGE
+	url = https://github.com/williamleif/GraphSAGE.git

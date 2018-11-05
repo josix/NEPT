@@ -14,9 +14,9 @@ PARSER.add_argument("word_mapping_file",
                     help="The mapping file between the words and ids")
 PARSER.add_argument("-o",
                     "--output",
-                    default='../data/word_user.data',
+                    default='../data/user-label.data',
                     type=str,
-                    help="Output path of converted file. (default: word_user.data)")
+                    help="Output path of converted file. (default: user-label.data)")
 ARGS = PARSER.parse_args()
 USER_LOG = ARGS.user_log
 EVENT_KEYWORD_JSON = ARGS.event_keyword_json

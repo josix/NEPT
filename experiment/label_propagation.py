@@ -27,6 +27,15 @@ PARSER.add_argument("corpus_file",
 PARSER.add_argument("concept_folder",
                     type=str,
                     help="The concepts data for all the events")
+PARSER.add_argument("--textrank_word2vec",
+                    type=bool,
+                    default=False)
+PARSER.add_argument("--textrank_idf",
+                    type=bool,
+                    default=False)
+PARSER.add_argument("--embedrank",
+                    type=bool,
+                    default=False)
 ARGS = PARSER.parse_args()
 UNSEEN_EVENTS_FILE = ARGS.unseen_event_file
 EMBEDDING_FILE = ARGS.embedding_file
@@ -36,21 +45,26 @@ jieba.set_dictionary("./jieba-zh_TW/jieba/dict.txt")
 MAX_EPOCHS = 10
 SIZE = 128
 # Switch embedrank, textrank_w2v, textrank_vsm
-# try:
-#     print('load doc2vec model')
-#     MODEL = Doc2Vec.load(CONCEPT_FOLDER+"/doc2vec.model")
-# except FileNotFoundError:
-#     MODEL = None
-# try:
-#     print('load word2vec model')
-#     MODEL = word2vec.Word2Vec.load(CONCEPT_FOLDER+"/word2vec.model")
-# except FileNotFoundError:
-#     MODEL = None
-try:
-    print('load vsm ')
-    MODEL = pickle.load(open(CONCEPT_FOLDER+"/vsm_model.pickle", 'rb'))
-except FileNotFoundError:
-    MODEL = None
+MODEL=None
+if ARGS.embedrank:
+    try:
+        print('load doc2vec model')
+        MODEL = Doc2Vec.load(CONCEPT_FOLDER+"/doc2vec.model")
+    except FileNotFoundError:
+        pass
+elif ARGS.textrank_word2vec:
+    try:
+        print('load word2vec model')
+        MODEL = word2vec.Word2Vec.load(CONCEPT_FOLDER+"/word2vec.model")
+    except FileNotFoundError:
+        pass
+elif ARGS.textrank_idf:
+    try:
+        print('load vsm ')
+        MODEL = pickle.load(open(CONCEPT_FOLDER+"/vsm_model.pickle", 'rb'))
+    except FileNotFoundError:
+        pass
+
 def concept_combine(concept_embedding, concept_mapping, fp=CORPUS_FILE):
     with open(fp, 'r') as json_file_in:
         item_tags_dict = json.load(json_file_in)
@@ -76,11 +90,13 @@ def textrank_getkeywords(paragraph):
     if not MODEL:
         return jieba.analyse.textrank(paragraph, topK=10, withWeight=False, allowPOS=('ns', 'n'))
     else:
-        # Switch word2vec or vsm
-        # return jieba.analyse.textrank_similarity(paragraph, topK=10, withWeight=False, allowPOS=('ns', 'n'), word_embedding=MODEL)
-        return jieba.analyse.textrank_vsm(paragraph, topK=10, withWeight=False, allowPOS=('ns', 'n'), vsm=MODEL)
+        # Switch word2vec or idf
+        if ARGS.textrank_idf:
+            return jieba.analyse.textrank_vsm(paragraph, topK=10, withWeight=False, allowPOS=('ns', 'n'), vsm=MODEL)
+        elif ARGS.textrank_word2vec:
+            return jieba.analyse.textrank_similarity(paragraph, topK=10, withWeight=False, allowPOS=('ns', 'n'), word_embedding=MODEL)
 
-def embedrank_getkeywords(paragraph, withWeight=False) -> list:
+def embedrank_getkeywords(paragraph, withWeight=False):
     '''Return a list[(word, weight)] or list[word] '''
     textrank = analyse.TextRank()
     textrank.pos_filt = frozenset(('ns', 'n'))
@@ -108,8 +124,10 @@ def closest_topK(unseen_event, concept_embedding, concept_mapping, dim, topK=10)
     unseen_event_title_tags = jieba.analyse.extract_tags(unseen_event[0])
 
     # Switch textrank or embedrank
-    unseen_event_description_words = textrank_getkeywords(unseen_event[1])
-    # unseen_event_description_words = embedrank_getkeywords(unseen_event[1])
+    if ARGS.embedrank:
+        unseen_event_description_words = embedrank_getkeywords(unseen_event[1])
+    else:
+        unseen_event_description_words = textrank_getkeywords(unseen_event[1])
 
     print('title words:', unseen_event_title_tags)
     print('description words:', unseen_event_description_words)
@@ -178,7 +196,8 @@ def load_concept(fp=CONCEPT_FOLDER):
             id_, *vector = line.strip().split()
             embedding[id_] = [ float(value) for value in vector]
     word_id_mapping = {}
-    with open(CONCEPT_FOLDER + '/textrank_mapping.txt') as fin: # Switch textrank or embedrank
+    file_name = "/embedrank_mapping.txt" if ARGS.embedrank else "/textrank_mapping.txt" # Switch textrank or embedrank
+    with open(CONCEPT_FOLDER + file_name) as fin:
         for line in fin:
             word_id, word = line.strip().split(',')
             word_id_mapping[word] = word_id
@@ -196,7 +215,7 @@ if __name__ == "__main__":
         print(ID_LIST)
         UNSEEN_EMBEDDING_DICT[id_] = embedding_propgation(ID_LIST, weight_func=lambda x: 1 / (0.00001 + x))
         print()
-    with open('unseen_events_rep_hpe(textrank_idf).txt', 'wt') as fout:
+    with open('unseen_events_label_embedding.txt', 'wt') as fout:
         fout.write("{}\n".format(len(UNSEEN_EMBEDDING_DICT)))
         for id_, embedding in UNSEEN_EMBEDDING_DICT.items():
             fout.write("{} {}\n".format(id_, ' '.join(map(lambda x:str(round(x, 6)),embedding))))
