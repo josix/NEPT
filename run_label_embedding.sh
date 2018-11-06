@@ -21,7 +21,7 @@ python3 ./script/generate_item_list.py -o ./data/itemsList.data ./data/user-item
 # random separate data
 #python3 ./script/data_split.py -o1 ./data/train.data -o2 ./data/test.data ./data/itemsList.data
 
-# generate network data for training hpe  
+# generate network data for training hpe
 python3 "./script/export.py" -o "./data/export.data" ./data/itemsList.data
 
 # HPE trainning

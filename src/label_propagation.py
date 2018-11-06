@@ -133,6 +133,7 @@ def closest_topK(unseen_event, concept_embedding, concept_mapping, dim, topK=10)
 
     print('title words:', unseen_event_title_tags)
     print('description words:', unseen_event_description_words)
+    # Generate the label embedding for a new item
     event_concept_embeddings = []
     for word in [*unseen_event_title_tags, *unseen_event_description_words]:
         try:
@@ -144,6 +145,7 @@ def closest_topK(unseen_event, concept_embedding, concept_mapping, dim, topK=10)
         unseen_event_vector = [0] * dim
     annoy_index = AnnoyIndex(dim)
     annoy_index.load('cc2vec.ann')
+    # Find topK colest item according to the label embedding
     ranking_list = annoy_index.get_nns_by_vector(unseen_event_vector, 10, search_k=-1, include_distances=True)
     propgation_list = []
     for id_, score in zip(ranking_list[0], ranking_list[1]):
@@ -215,7 +217,7 @@ if __name__ == "__main__":
         ID_LIST =\
             closest_topK(content, CONCEPT_EMBEDDING, CONCEPT_ID_MAPPING, SIZE)
         print(ID_LIST)
-        UNSEEN_EMBEDDING_DICT[id_] = embedding_propgation(ID_LIST, weight_func=lambda x: 1 / (0.00001 + x))
+        UNSEEN_EMBEDDING_DICT[id_] = embedding_propgation(ID_LIST, weight_func=lambda x: 1 / (0.00001 + x)) # params to trained
         print()
     with open('unseen_events_label_embedding.txt', 'wt') as fout:
         fout.write("{}\n".format(len(UNSEEN_EMBEDDING_DICT)))
