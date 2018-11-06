@@ -12,6 +12,8 @@ eg:
 import argparse
 import json
 import pickle as pickle
+import sys
+sys.path.insert(0, "./jieba-zh_TW_NEPT_src")
 
 from jieba import analyse
 import jieba
@@ -67,7 +69,7 @@ def word2vec_train(filepath: str):
     print("Train word2vec from {}".format(filepath))
     with open(filepath, 'rt') as fin:
         textrank = analyse.TextRank()
-        jieba.set_dictionary("./jieba-zh_TW/jieba/dict.txt")
+        jieba.set_dictionary("./jieba-zh_TW_NEPT_src/jieba/dict.txt")
         sentences = []
         for line in tqdm(fin):
             event_id, *event_description_list = line.strip().split(',')
@@ -95,7 +97,7 @@ def word2vec_train(filepath: str):
 def event_title_cut(filepath: str, word_vector=None, tfidf=None) -> dict:
     '''Return a dict{event_id: [words]} '''
     tag_dict = dict()
-    jieba.set_dictionary("./jieba-zh_TW/jieba/dict.txt")
+    jieba.set_dictionary("./jieba-zh_TW_NEPT_src/jieba/dict.txt")
     with open(filepath, 'rt') as fin:
         for line in tqdm(fin):
             event_id, event_title, *event_description_list = line.strip().split(',')

@@ -34,7 +34,7 @@ OUTPUT = ARGS.output
 def event_title_cut(filepath):
     '''Return a dict{event_id: [tags]} '''
     tag_dict = defaultdict(list)
-    jieba.set_dictionary("./jieba-zh_TW/jieba/dict.txt")
+    jieba.set_dictionary("./jieba-zh_TW_NEPT_src/jieba/dict.txt")
     with open(filepath, 'rt') as fin:
         for line in fin:
             event_id, event_title, *_ = line.strip().split(',')

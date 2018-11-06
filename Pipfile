@@ -6,7 +6,6 @@ name = "pypi"
 [packages]
 tensorflow = "*"
 networkx = "==1.11"
-jieba = "*"
 scikit-learn = "*"
 numpy = "*"
 scipy = "*"

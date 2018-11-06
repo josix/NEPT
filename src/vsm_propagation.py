@@ -26,7 +26,7 @@ ARGS = PARSER.parse_args()
 UNSEEN_EVENTS_FILE = ARGS.unseen_event_file
 EMBEDDING_FILE = ARGS.embedding_file
 CORPUS_FILE = ARGS.corpus_file
-jieba.set_dictionary("./jieba-zh_TW/jieba/dict.txt")
+jieba.set_dictionary("./jieba-zh_TW_NEPT_src/jieba/dict.txt")
 def vsm(fp=CORPUS_FILE):
     with open(fp, 'r') as json_file_in:
         item_tags_dict = json.load(json_file_in)

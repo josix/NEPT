@@ -41,7 +41,7 @@ UNSEEN_EVENTS_FILE = ARGS.unseen_event_file
 EMBEDDING_FILE = ARGS.embedding_file
 CORPUS_FILE = ARGS.corpus_file
 CONCEPT_FOLDER = ARGS.concept_folder
-jieba.set_dictionary("./jieba-zh_TW/jieba/dict.txt")
+jieba.set_dictionary("./jieba-zh_TW_NEPT_src/jieba/dict.txt")
 MAX_EPOCHS = 10
 SIZE = 128
 # Switch embedrank, textrank_w2v, textrank_vsm
