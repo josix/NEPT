@@ -17,6 +17,8 @@ from jieba import analyse
 import jieba
 from tqdm import tqdm
 from gensim.models import Word2Vec
+from sklearn.feature_extraction.text import TfidfVectorizer
+from annoy import AnnoyIndex
 
 PARSER = argparse.ArgumentParser()
 PARSER.add_argument("file",
@@ -36,6 +38,27 @@ PARSER.add_argument("--textrank_idf",
 ARGS = PARSER.parse_args()
 FILEPATH = ARGS.file
 OUTPUT = ARGS.output
+
+def vsm(fp=FILEPATH):
+    print("Train vsm from {}".format(fp))
+    with open(fp, 'r') as fin:
+        index_id_dict = {}
+        corpus = []
+        for index, line in tqdm(enumerate(fin)):
+            event_id, *event_description_list = line.strip().split(',')
+            event_description = " ".join(event_description_list)
+            sentence = jieba.analyse.extract_tags(event_description)
+            corpus.append(" ".join(sentence))
+            index_id_dict[index] = event_id
+        vectorizer = TfidfVectorizer()
+        document_term_matrix = vectorizer.fit_transform(corpus)
+        dim = document_term_matrix.shape[1]
+        annoy_index = AnnoyIndex(dim)
+        for index, vector in enumerate(document_term_matrix):
+            annoy_index.add_item(index, vector.toarray()[0])
+        annoy_index.build(10) # 10 trees
+        annoy_index.save('vsm_tfidf.ann')
+        return index_id_dict, vectorizer, document_term_matrix
 
 def word2vec_train(filepath: str):
     '''
@@ -81,17 +104,19 @@ def event_title_cut(filepath: str, word_vector=None, tfidf=None) -> dict:
             if tfidf is not None:
                 textrank_result = jieba.analyse.textrank_vsm(event_description, topK=10, withWeight=True, allowPOS=('ns', 'n'), vsm=tfidf)
             elif word_vector is not None:
-                textrank_result = jieba.analyse.textrank_similarity(event_description, topK=10, withWeight=True, allowPOS=('ns', 'n'), word_embedding=word_vector),
+                textrank_result = jieba.analyse.textrank_similarity(event_description, topK=10, withWeight=True, allowPOS=('ns', 'n'), word_embedding=word_vector)
             else:
-                textrank_result = jieba.analyse.textrank(event_description, topK=10, withWeight=True, allowPOS=('ns', 'n')),
-            tags = title_tags + textrank_result[0]
+                textrank_result = jieba.analyse.textrank(event_description, topK=10, withWeight=True, allowPOS=('ns', 'n'))
+            tags = title_tags + textrank_result
             tag_dict[int(event_id)] = tags
     return tag_dict
 if __name__ == "__main__":
     IDF=None
     WORD2VEC=None
     if ARGS.textrank_idf:
-        IDF = pickle.load(open("vsm_model.pickle", 'rb'))
+        IDS_DICT, TRAINED_MODEL, DOC_MATRIX = vsm()
+        IDF = TRAINED_MODEL
+        pickle.dump(TRAINED_MODEL, open(OUTPUT+'vsm_model.pickle', 'wb'))
     if ARGS.textrank_word2vec:
         WORD2VEC = word2vec_train(FILEPATH)
     EVENT_TITLE_TAG_DICT = event_title_cut(FILEPATH, tfidf=IDF, word_vector=WORD2VEC)
