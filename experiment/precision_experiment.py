@@ -99,7 +99,6 @@ def query_gen(user_watch_list, item_vertex_embedding, fp):
                 continue
             yield user, query_item
 
-
 if __name__ == "__main__":
     # show detail
     command = "awk -F, '{print $0 }' '../../kktix/preproecessed_data/eventDetailMap_v7.csv' '../../kktix/preproecessed_data/eventDetailMap_20180903.csv' '../../kktix/preproecessed_data/eventDetailMap_20180523.csv'"

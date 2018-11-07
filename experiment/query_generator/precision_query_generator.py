@@ -1,7 +1,6 @@
 import random
 
 random.seed(11)
-
 def load_popular_event() -> set:
     with open('../../source/popular_events_100.txt') as fin:
         return {line.strip().split(',')[0] for line in fin}
