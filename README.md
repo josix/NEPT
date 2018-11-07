@@ -55,7 +55,7 @@ File example:
 ```
 
 ## Complete All Things
-**Propagation by TFIDF:** ([The full execution flow for propagation by TFIDF](https://https://github.com/wilson8507/NEPT/tree/label_embedding#the-full-execution-flow-for-propagation-by-tfidf))
+**Propagation by TFIDF:** ([The full execution flow for propagation by TFIDF](https://github.com/wilson8507/NEPT/blob/label_embedding/README.md#the-full-execution-flow-for-propagation-by-tfidf))
 ```
 ./run.sh <logFiles_path> <userId_column_number> <itemId_column_number> <title_column_number> <unseen_events_file_path>
 ```
@@ -64,7 +64,7 @@ e.g.
 ./run.sh source/entertainment_transactions_v7.csv 5 11 13 source/unseen_events.csv
 ```
 
-**Propagation by label-embedding:** ([The full execution flow for propagation by label-embedding](https://https://github.com/wilson8507/NEPT/tree/label_embedding#the-full-execution-flow-for-propagation-by-label-embedding))
+**Propagation by label-embedding:** ([The full execution flow for propagation by label-embedding](https://github.com/wilson8507/NEPT/blob/label_embedding/README.md#the-full-execution-flow-for-propagation-by-label-embedding))
 ```
 ./run_label_embedding.sh <logFiles_path> <userId_column_number> <itemId_column_number> <title_column_number> <unseen_events_file_path>
 ```
@@ -151,7 +151,7 @@ python3 ./script/construct_user_word_graph.py [-o OUTPUT]
                        -alpha 0.025
                        -threads 4
 ```
-13. Propagate HPE embedding based on events' aggregated label-embedding.
+12. Propagate HPE embedding based on events' aggregated label-embedding.
 ```
 python3 ./src/label_propagation.py [--textrank_word2vec TEXTRANK_WORD2VEC 1]
                                    [--textrank_idf TEXTRANK_IDF 1]
