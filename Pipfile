@@ -4,10 +4,17 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
+tensorflow = "*"
+networkx = "==1.11"
 scikit-learn = "*"
-jieba = "*"
 numpy = "*"
 scipy = "*"
+annoy = "*"
+gensim = "*"
+tqdm = "*"
+fuzzywuzzy = "*"
+python-levenshtein = "*"
+jieba = "*"
 
 [dev-packages]
 

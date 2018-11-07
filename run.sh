@@ -22,4 +22,4 @@ python3 "./script/export.py" -o "./data/export.data" ./data/train.data
 ./proNet-core/cli/hpe -train ./data/export.data -save ./data/rep.hpe -undirected 1 -dimensions 128 -reg 0.01 -sample_times 5 -walk_steps 5 -negative_samples 5 -alpha 0.025 -threads 4
 python3 ./script/rep_transform.py -o ./data/rep.json ./data/rep.hpe
 python3 ./script/segement.py -o ./data/tags.json ./data/eventsTitle.data
-python3 ./experiment/vsm_propagation.py $5 ./data/rep.json ./data/tags.json
+python3 ./src/vsm_propagation.py $5 ./data/rep.json ./data/tags.json
