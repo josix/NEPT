@@ -14,6 +14,7 @@ gensim = "*"
 tqdm = "*"
 fuzzywuzzy = "*"
 python-levenshtein = "*"
+jieba = "*"
 
 [dev-packages]
 
