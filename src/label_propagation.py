@@ -5,6 +5,9 @@ to the unseen item entity.
 import json
 import argparse
 import pickle as pickle
+import sys
+sys.path.insert(0, "./jieba-zh_TW_NEPT_src")
+
 import jieba
 import jieba.analyse
 from jieba import analyse
@@ -152,16 +155,14 @@ def closest_topK(unseen_event, concept_embedding, concept_mapping, dim, topK=10)
         propgation_list.append((id_, score))
     return propgation_list
 
-def embedding_propgation(ranking_list, weight_func = lambda x : 1, fp=EMBEDDING_FILE):
-    with open(EMBEDDING_FILE, 'r') as json_file_in:
-        embedding_dict = json.load(json_file_in)
+def embedding_propgation(ranking_list, id_to_emb, weight_func = lambda x : 1):
     accumulate_vector = []
     accumulate_weight = 0
     weight_list = []
     add_count = 0
     for ranking_list_index, (id_, score) in enumerate(ranking_list):
         try:
-            added_vector = embedding_dict[str(id_)]
+            added_vector = id_to_emb[str(id_)]
         except KeyError:
             # Due to some events are lack of people book them,
             # they are removed from the training set.
@@ -209,17 +210,19 @@ def load_concept(fp=CONCEPT_FOLDER):
 
 if __name__ == "__main__":
     CONCEPT_EMBEDDING, CONCEPT_ID_MAPPING = load_concept()
-    event_to_label_emb = gen_event_lbl_emb(CONCEPT_EMBEDDING, CONCEPT_ID_MAPPING)
+    line_event_to_label_emb = gen_event_lbl_emb(CONCEPT_EMBEDDING, CONCEPT_ID_MAPPING)
     UNSEEN_DICT = load_unseen()
     UNSEEN_EMBEDDING_DICT = {}
+    with open(EMBEDDING_FILE, 'r') as json_file_in:
+        hpe_event_to_item_emb = json.load(json_file_in)
     for id_, content in UNSEEN_DICT.items():
         print('unssenId:', id_)
         ID_LIST =\
             closest_topK(content, CONCEPT_EMBEDDING, CONCEPT_ID_MAPPING, SIZE)
         print(ID_LIST)
-        UNSEEN_EMBEDDING_DICT[id_] = embedding_propgation(ID_LIST, weight_func=lambda x: 1 / (0.00001 + x)) # params to trained
+        UNSEEN_EMBEDDING_DICT[id_] = embedding_propgation(ID_LIST, line_event_to_label_emb, weight_func=lambda x: 1 / (0.00001 + x)) # params to trained
         print()
-    with open('unseen_events_label_embedding.txt', 'wt') as fout:
+    with open('unseen_events_label_embedding(texrank).txt', 'wt') as fout:
         fout.write("{}\n".format(len(UNSEEN_EMBEDDING_DICT)))
         for id_, embedding in UNSEEN_EMBEDDING_DICT.items():
             fout.write("{} {}\n".format(id_, ' '.join(map(lambda x:str(round(x, 6)),embedding))))
