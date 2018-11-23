@@ -39,6 +39,9 @@ PARSER.add_argument("--textrank_idf",
 PARSER.add_argument("--embedrank",
                     type=bool,
                     default=False)
+PARSER.add_argument("--tfidf",
+                    type=bool,
+                    default=False)
 ARGS = PARSER.parse_args()
 UNSEEN_EVENTS_FILE = ARGS.unseen_event_file
 EMBEDDING_FILE = ARGS.embedding_file
@@ -93,18 +96,18 @@ def gen_event_lbl_emb(concept_embedding, concept_mapping, fp=CORPUS_FILE):
 
 def textrank_getkeywords(paragraph):
     if not MODEL:
-        return jieba.analyse.textrank(paragraph, topK=10, withWeight=False, allowPOS=('ns', 'n'))
+        return jieba.analyse.textrank(paragraph, topK=10, withWeight=False, allowPOS=('ns', 'n', 'N'))
     else:
         # Switch word2vec or idf
         if ARGS.textrank_idf:
-            return jieba.analyse.textrank_vsm(paragraph, topK=10, withWeight=False, allowPOS=('ns', 'n'), vsm=MODEL)
+            return jieba.analyse.textrank_vsm(paragraph, topK=10, withWeight=False, allowPOS=('ns', 'n', 'N'), vsm=MODEL)
         elif ARGS.textrank_word2vec:
-            return jieba.analyse.textrank_similarity(paragraph, topK=10, withWeight=False, allowPOS=('ns', 'n'), word_embedding=MODEL)
+            return jieba.analyse.textrank_similarity(paragraph, topK=10, withWeight=False, allowPOS=('ns', 'n', 'N'), word_embedding=MODEL)
 
 def embedrank_getkeywords(paragraph, withWeight=False):
     '''Return a list[(word, weight)] or list[word] '''
     textrank = analyse.TextRank()
-    textrank.pos_filt = frozenset(('ns', 'n'))
+    textrank.pos_filt = frozenset(('ns', 'n', 'N'))
     words = set()
     for word_pair in textrank.tokenizer.cut(paragraph):
         if textrank.pairfilter(word_pair):
@@ -120,6 +123,21 @@ def embedrank_getkeywords(paragraph, withWeight=False):
     else:
         return [word for word, weight in candidate_keyword[:10]]
 
+def tfidf_getkeywords(paragraph):
+    '''Return a list[(word, weight)] or list[word] '''
+    with open(CONCEPT_FOLDER+"/tfidfvsm_model.pickle", 'rb') as fin:
+        model = pickle.load(fin)
+    words = [word for word in jieba.analyse.extract_tags(paragraph)]
+    word_score = []
+    for word in set(words):
+        try:
+            word_score.append((word, words.count(word) * model.idf_[model.vocabulary_[word]]))
+        except KeyError: # Out of vocabulary
+            continue
+    candidate_keyword = sorted(word_score, key=lambda x: x[1], reverse=True)
+    return [word for word, weight in candidate_keyword[:10]]
+
+
 def closest_topK(unseen_event, concept_embedding, concept_mapping, dim, topK=10):
     """
     unseen_event: (title: str, description: str)
@@ -131,6 +149,8 @@ def closest_topK(unseen_event, concept_embedding, concept_mapping, dim, topK=10)
     # Switch textrank or embedrank
     if ARGS.embedrank:
         unseen_event_description_words = embedrank_getkeywords(unseen_event[1])
+    elif ARGS.tfidf:
+        unseen_event_description_words = tfidf_getkeywords(unseen_event[1])
     else:
         unseen_event_description_words = textrank_getkeywords(unseen_event[1])
 
@@ -201,7 +221,13 @@ def load_concept(fp=CONCEPT_FOLDER):
             id_, *vector = line.strip().split()
             embedding[id_] = [ float(value) for value in vector]
     word_id_mapping = {}
-    file_name = "/embedrank_mapping.txt" if ARGS.embedrank else "/textrank_mapping.txt" # Switch textrank or embedrank
+    # Switch textrank or embedrank or tfidf
+    if ARGS.embedrank:
+        file_name = "/embedrank_mapping.txt"
+    elif ARGS.tfidf:
+        file_name = "/tfidf_mapping.txt"
+    else:
+        file_name = "/textrank_mapping.txt"
     with open(CONCEPT_FOLDER + file_name) as fin:
         for line in fin:
             word_id, word = line.strip().split(',')
@@ -220,9 +246,10 @@ if __name__ == "__main__":
         ID_LIST =\
             closest_topK(content, CONCEPT_EMBEDDING, CONCEPT_ID_MAPPING, SIZE)
         print(ID_LIST)
+        # propagated embedding could be changed
         UNSEEN_EMBEDDING_DICT[id_] = embedding_propgation(ID_LIST, line_event_to_label_emb, weight_func=lambda x: 1 / (0.00001 + x)) # params to trained
         print()
-    with open('unseen_events_label_embedding(texrank).txt', 'wt') as fout:
+    with open('unseen_events_label_embedding(textrank_ch).txt', 'wt') as fout:
         fout.write("{}\n".format(len(UNSEEN_EMBEDDING_DICT)))
         for id_, embedding in UNSEEN_EMBEDDING_DICT.items():
             fout.write("{} {}\n".format(id_, ' '.join(map(lambda x:str(round(x, 6)),embedding))))

@@ -13,6 +13,8 @@ import argparse
 import json
 import os.path
 from collections import defaultdict
+import sys
+sys.path.insert(0, "./jieba-zh_TW_NEPT_src")
 
 from jieba import analyse
 import jieba
@@ -50,7 +52,7 @@ def doc2vec_train(filepath: str, max_count=3):
     '''
     with open(filepath, 'rt') as fin:
         textrank = analyse.TextRank()
-        textrank.pos_filt = frozenset(('ns', 'n'))
+        textrank.pos_filt = frozenset(('ns', 'n', 'N'))
         jieba.set_dictionary("./jieba-zh_TW_NEPT_src/jieba/dict.txt")
         paragraphs = []
         document_to_words = {}
