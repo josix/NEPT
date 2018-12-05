@@ -42,6 +42,12 @@ PARSER.add_argument("--embedrank",
 PARSER.add_argument("--tfidf",
                     type=bool,
                     default=False)
+PARSER.add_argument("--mapping",
+                    type=bool,
+                    default=False)
+PARSER.add_argument("--propagated_by_preference_directly",
+                    type=bool,
+                    default=False)
 ARGS = PARSER.parse_args()
 UNSEEN_EVENTS_FILE = ARGS.unseen_event_file
 EMBEDDING_FILE = ARGS.embedding_file
@@ -234,6 +240,16 @@ def load_concept(fp=CONCEPT_FOLDER):
             word_id_mapping[word] = word_id
     return embedding, word_id_mapping
 
+def transform(source_embedding:dict):
+    from keras.models import load_model
+    import numpy as np
+    MODEL = load_model(CONCEPT_FOLDER+ "/mapping.h5")
+    target_embedding = {}
+    for key, emb in source_embedding.items():
+        transformed_emb = MODEL.predict(np.array([emb]))[0]
+        target_embedding[key] = transformed_emb.tolist()
+    return target_embedding
+
 if __name__ == "__main__":
     CONCEPT_EMBEDDING, CONCEPT_ID_MAPPING = load_concept()
     line_event_to_label_emb = gen_event_lbl_emb(CONCEPT_EMBEDDING, CONCEPT_ID_MAPPING)
@@ -241,15 +257,24 @@ if __name__ == "__main__":
     UNSEEN_EMBEDDING_DICT = {}
     with open(EMBEDDING_FILE, 'r') as json_file_in:
         hpe_event_to_item_emb = json.load(json_file_in)
+
+    if ARGS.mapping:
+        transformed_label_emb = transform(line_event_to_label_emb)
+        propagated_emb = transformed_label_emb
+    elif ARGS.propagated_by_preference_directly:
+        propagated_emb = hpe_event_to_item_emb
+    else:
+        propagated_emb = line_event_to_label_emb
+
     for id_, content in UNSEEN_DICT.items():
         print('unssenId:', id_)
         ID_LIST =\
             closest_topK(content, CONCEPT_EMBEDDING, CONCEPT_ID_MAPPING, SIZE)
         print(ID_LIST)
         # propagated embedding could be changed
-        UNSEEN_EMBEDDING_DICT[id_] = embedding_propgation(ID_LIST, line_event_to_label_emb, weight_func=lambda x: 1 / (0.00001 + x)) # params to trained
+        UNSEEN_EMBEDDING_DICT[id_] = embedding_propgation(ID_LIST, propagated_emb, weight_func=lambda x: 1 / (0.00001 + x)) # params to trained
         print()
-    with open('unseen_events_label_embedding(textrank_ch).txt', 'wt') as fout:
+    with open('unseen_events_mapping_item_embedding(textrank_vsm_ch).txt', 'wt') as fout:
         fout.write("{}\n".format(len(UNSEEN_EMBEDDING_DICT)))
         for id_, embedding in UNSEEN_EMBEDDING_DICT.items():
             fout.write("{} {}\n".format(id_, ' '.join(map(lambda x:str(round(x, 6)),embedding))))

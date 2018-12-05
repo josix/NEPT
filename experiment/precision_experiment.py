@@ -116,7 +116,7 @@ if __name__ == "__main__":
     # model_recommendation
     # hpe/mf + vsm
     user_vertex_embedding, item_vertex_embedding = load_embedding('../hpe2_data/rep.hpe')
-    _, unseen_vectex_embedding = load_embedding('../log_transaction_data/unseen_data/unseen_events_label_embedding(textrank_ch).txt')
+    _, unseen_vectex_embedding = load_embedding('../log_transaction_data/unseen_data/unseen_events_mapping_item_embedding(textrank_vsm_ch).txt')
 
     # _, unseen_vectex_embedding_rank = load_embedding('../log_transaction_data/unseen_data/unssen_events_rep_hpe(tfidf_2018unseen).txt')
     # _, unseen_vectex_embedding_tfidf = load_embedding('../log_transaction_data/unseen_data/unseen_events_rep_hpe(textrank_cooccurence).txt')
