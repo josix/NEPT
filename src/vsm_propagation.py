@@ -114,7 +114,7 @@ if __name__ == "__main__":
         print(ID_LIST)
         UNSEEN_EMBEDDING_DICT[id_] = embedding_propgation(ID_LIST, weight_func=lambda x : 1 / ((acos(x / -2 + 1) * 180 / pi) ** 2) if x != 0 else 1)
         print()
-    with open('unssen_events_rep_hpe(tfidf_2018unseen).txt', 'wt') as fout:
+    with open('unssen_events_rep_hpe(tfidf_2018unseen_top300queries_before2018).txt', 'wt') as fout:
         fout.write("{}\n".format(len(UNSEEN_EMBEDDING_DICT)))
         for id_, embedding in UNSEEN_EMBEDDING_DICT.items():
             fout.write("{} {}\n".format(id_, ' '.join(map(lambda x:str(round(x, 6)),embedding))))

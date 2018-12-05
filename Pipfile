@@ -15,6 +15,7 @@ fuzzywuzzy = "*"
 python-levenshtein = "*"
 jieba = "*"
 keras = "*"
+sklearn = "*"
 
 [dev-packages]
 

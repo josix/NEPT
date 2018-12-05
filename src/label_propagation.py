@@ -102,18 +102,18 @@ def gen_event_lbl_emb(concept_embedding, concept_mapping, fp=CORPUS_FILE):
 
 def textrank_getkeywords(paragraph):
     if not MODEL:
-        return jieba.analyse.textrank(paragraph, topK=10, withWeight=False, allowPOS=('ns', 'n', 'N'))
+        return jieba.analyse.textrank(paragraph, topK=10, withWeight=False, allowPOS=('ns', 'n'))
     else:
         # Switch word2vec or idf
         if ARGS.textrank_idf:
-            return jieba.analyse.textrank_vsm(paragraph, topK=10, withWeight=False, allowPOS=('ns', 'n', 'N'), vsm=MODEL)
+            return jieba.analyse.textrank_vsm(paragraph, topK=10, withWeight=False, allowPOS=('ns', 'n'), vsm=MODEL)
         elif ARGS.textrank_word2vec:
-            return jieba.analyse.textrank_similarity(paragraph, topK=10, withWeight=False, allowPOS=('ns', 'n', 'N'), word_embedding=MODEL)
+            return jieba.analyse.textrank_similarity(paragraph, topK=10, withWeight=False, allowPOS=('ns', 'n'), word_embedding=MODEL)
 
 def embedrank_getkeywords(paragraph, withWeight=False):
     '''Return a list[(word, weight)] or list[word] '''
     textrank = analyse.TextRank()
-    textrank.pos_filt = frozenset(('ns', 'n', 'N'))
+    textrank.pos_filt = frozenset(('ns', 'n'))
     words = set()
     for word_pair in textrank.tokenizer.cut(paragraph):
         if textrank.pairfilter(word_pair):
@@ -274,7 +274,7 @@ if __name__ == "__main__":
         # propagated embedding could be changed
         UNSEEN_EMBEDDING_DICT[id_] = embedding_propgation(ID_LIST, propagated_emb, weight_func=lambda x: 1 / (0.00001 + x)) # params to trained
         print()
-    with open('unseen_events_mapping_item_embedding(textrank_vsm_ch).txt', 'wt') as fout:
+    with open('unseen_events_label_embedding(textrank_top300queries_before2018_unweighted).txt', 'wt') as fout:
         fout.write("{}\n".format(len(UNSEEN_EMBEDDING_DICT)))
         for id_, embedding in UNSEEN_EMBEDDING_DICT.items():
             fout.write("{} {}\n".format(id_, ' '.join(map(lambda x:str(round(x, 6)),embedding))))
