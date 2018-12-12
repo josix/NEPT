@@ -107,11 +107,11 @@ def textrank_get_keywords(filepath: str, word_vector=None, tfidf=None) -> dict:
             event_description = " ".join(event_description_list)
             title_tags = [(word, 1.0) for word in jieba.analyse.extract_tags(event_title)]
             if tfidf is not None:
-                textrank_result = jieba.analyse.textrank_vsm(event_description, topK=10, withWeight=True, allowPOS=('ns', 'n', 'N'), vsm=tfidf)
+                textrank_result = jieba.analyse.textrank_vsm(event_description, topK=10, withWeight=True, allowPOS=('ns', 'n'), vsm=tfidf)
             elif word_vector is not None:
-                textrank_result = jieba.analyse.textrank_similarity(event_description, topK=10, withWeight=True, allowPOS=('ns', 'n', 'N'), word_embedding=word_vector)
+                textrank_result = jieba.analyse.textrank_similarity(event_description, topK=10, withWeight=True, allowPOS=('ns', 'n'), word_embedding=word_vector)
             else:
-                textrank_result = jieba.analyse.textrank(event_description, topK=10, withWeight=True, allowPOS=('ns', 'n', 'N'))
+                textrank_result = jieba.analyse.textrank(event_description, topK=10, withWeight=True, allowPOS=('ns', 'n'))
             tags = title_tags + textrank_result
             tag_dict[int(event_id)] = tags
     return tag_dict

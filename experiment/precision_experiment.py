@@ -115,14 +115,14 @@ if __name__ == "__main__":
 
     # model_recommendation
     # hpe/mf + vsm
-    # user_vertex_embedding, item_vertex_embedding = load_embedding('../hpe2_data/rep.hpe')
-    _, unseen_vectex_embedding = load_embedding('../log_transaction_data/unseen_data/unseen_events_label_embedding(textrank_idf_top300queries_before2018_weighted).txt')
+    # user_vertex_embedding, item_vertex_embedding = load_embedding('../log_transaction_data/rep.hpe')
+    # _, unseen_vectex_embedding = load_embedding('../log_transaction_data/unseen_data/unssen_events_rep_hpe(tfidf_2018unseen_without_query).txt')
 
-    # _, unseen_vectex_embedding_rank = load_embedding('../log_transaction_data/unseen_data/unseen_events_label_embedding(textrank_idf_top300queries_before2018_weighted).txt')
-    # _, unseen_vectex_embedding_tfidf = load_embedding('../log_transaction_data/unseen_data/unssen_events_rep_hpe(tfidf_2018unseen_top300queries_before2018).txt')
-    # unseen_vectex_embedding = \
-    #     {key : unseen_vectex_embedding_rank[key] + unseen_vectex_embedding_tfidf[key]
-    #         for key in unseen_vectex_embedding_rank.keys()}
+    _, unseen_vectex_embedding_rank = load_embedding('../log_transaction_data/unseen_data/unseen_events_label_embedding(textrank_idf_top300queries_before2018_weighted).txt')
+    _, unseen_vectex_embedding_tfidf = load_embedding('../log_transaction_data/unseen_data/unssen_events_rep_hpe(tfidf_2018unseen_without_query).txt')
+    unseen_vectex_embedding = \
+        {key : unseen_vectex_embedding_rank[key] + unseen_vectex_embedding_tfidf[key]
+            for key in unseen_vectex_embedding_rank.keys()}
 
     #rec_embedding = {**{ key:(value, 'hpe') for key, value in item_vertex_embedding.items() },
     #                 **{ key:(value, 'propagation') for key, value in unseen_vectex_embedding.items()} }
@@ -226,7 +226,7 @@ if __name__ == "__main__":
             else:
                 print()
 
-    with open('./result/precision@5_transaction_top300_popular_queries_only_new_query_train/textrank_idf_semantic_rec.pickle', 'wb') as fout:
+    with open('./result/precision@5_transaction_top300_popular_queries_only_new_query_train/textrank_idf_semantic_rec_combin_v1_without_propagation_train.pickle', 'wb') as fout:
         pickle.dump(cases_to_result, fout)
 
     print('# of queries: {}'.format(count))
