@@ -274,7 +274,7 @@ if __name__ == "__main__":
         # propagated embedding could be changed
         UNSEEN_EMBEDDING_DICT[id_] = embedding_propgation(ID_LIST, propagated_emb, weight_func=lambda x: 1 / (0.00001 + x)) # params to trained
         print()
-    with open('unseen_events_label_embedding(textrank_top300queries_before2018_unweighted).txt', 'wt') as fout:
+    with open('unseen_events_label_embedding(textrank_w2v_top100queries_strong_user_before2018).txt', 'wt') as fout:
         fout.write("{}\n".format(len(UNSEEN_EMBEDDING_DICT)))
         for id_, embedding in UNSEEN_EMBEDDING_DICT.items():
             fout.write("{} {}\n".format(id_, ' '.join(map(lambda x:str(round(x, 6)),embedding))))
