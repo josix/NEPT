@@ -97,7 +97,7 @@ def gen_event_lbl_emb(concept_embedding, concept_mapping, fp=CORPUS_FILE):
                 annoy_index.add_item(int(id_key), event_vec[id_key])
         # For K-nearest neighbor retrieval
         annoy_index.build(10) # 10 trees
-        annoy_index.save('cc2vec.ann')
+        annoy_index.save('cc2vec_w2v_cluster.ann')
         return event_vec
 
 def textrank_getkeywords(paragraph):
@@ -173,7 +173,7 @@ def closest_topK(unseen_event, concept_embedding, concept_mapping, dim, topK=10)
     if unseen_event_vector == []:
         unseen_event_vector = [0] * dim
     annoy_index = AnnoyIndex(dim)
-    annoy_index.load('cc2vec.ann')
+    annoy_index.load('cc2vec_w2v_cluster.ann')
     # Find topK colest item according to the label embedding
     ranking_list = annoy_index.get_nns_by_vector(unseen_event_vector, 10, search_k=-1, include_distances=True)
     propgation_list = []
@@ -274,7 +274,7 @@ if __name__ == "__main__":
         # propagated embedding could be changed
         UNSEEN_EMBEDDING_DICT[id_] = embedding_propgation(ID_LIST, propagated_emb, weight_func=lambda x: 1 / (0.00001 + x)) # params to trained
         print()
-    with open('unseen_events_label_embedding(textrank_w2v_top100queries_strong_user_before2018).txt', 'wt') as fout:
+    with open('unseen_events_label_cluster_embedding(textrank_w2v_top100queries_strong_user_before2018).txt', 'wt') as fout:
         fout.write("{}\n".format(len(UNSEEN_EMBEDDING_DICT)))
         for id_, embedding in UNSEEN_EMBEDDING_DICT.items():
             fout.write("{} {}\n".format(id_, ' '.join(map(lambda x:str(round(x, 6)),embedding))))

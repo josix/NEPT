@@ -116,13 +116,13 @@ if __name__ == "__main__":
     # model_recommendation
     # hpe/mf + vsm
     # user_vertex_embedding, item_vertex_embedding = load_embedding('../log_transaction_data/rep.hpe')
-    _, unseen_vectex_embedding = load_embedding('../log_transaction_data/unseen_data/unssen_events_rep_hpe(tfidf_2018unseen_top100queries_strong_user_before2018_without_query).txt')
+    # _, unseen_vectex_embedding = load_embedding('../log_transaction_data/unseen_data/keyword_setting_span3_iter300/unseen_events_label_cluster_embedding(textrank_w2v_top100queries_strong_user_before2018).txt')
 
-    # _, unseen_vectex_embedding_rank = load_embedding('../log_transaction_data/unseen_data/unseen_events_label_embedding(textrank_top100queries_strong_user_before2018).txt')
-    # _, unseen_vectex_embedding_tfidf = load_embedding('../log_transaction_data/unseen_data/unssen_events_rep_hpe(tfidf_2018unseen_top100queries_strong_user_before2018).txt')
-    # unseen_vectex_embedding = \
-    #     {key : unseen_vectex_embedding_rank[key] + unseen_vectex_embedding_tfidf[key]
-    #         for key in unseen_vectex_embedding_rank.keys()}
+    _, unseen_vectex_embedding_rank = load_embedding('../log_transaction_data/unseen_data/keyword_setting_span3_iter300/unseen_events_label_cluster_embedding(textrank_top100queries_strong_user_before2018).txt')
+    _, unseen_vectex_embedding_tfidf = load_embedding('../log_transaction_data/unseen_data/keyword_setting_span3_iter300/unssen_events_rep_hpe(tfidf_2018unseen_top100queries_strong_user_before2018).txt')
+    unseen_vectex_embedding = \
+        {key : unseen_vectex_embedding_rank[key] + unseen_vectex_embedding_tfidf[key]
+            for key in unseen_vectex_embedding_rank.keys()}
 
     #rec_embedding = {**{ key:(value, 'hpe') for key, value in item_vertex_embedding.items() },
     #                 **{ key:(value, 'propagation') for key, value in unseen_vectex_embedding.items()} }
@@ -146,7 +146,7 @@ if __name__ == "__main__":
     # recommendation_list = popularity_recommendation(query_item, popularity_list, item_detail_map)
 
     # model_recommendation
-    with cf.ProcessPoolExecutor(max_workers=4) as executor:
+    with cf.ProcessPoolExecutor(max_workers=20) as executor:
         future_to_user =\
                 {executor.submit(recommend, query, rec_embedding) : user
                 for index, (user, query) in enumerate(query_gen(user_watch_list, rec_embedding, './data/precision@5_1user_1item_top100_popular_query_user_click_10.txt'))
@@ -226,7 +226,7 @@ if __name__ == "__main__":
             else:
                 print()
 
-    with open('./result/precision@5_transaction_top100_popular_queries_storng_user_only_new_query_train/version1_hpe_query.pkl', 'wb') as fout:
+    with open('./result/textrank.pkl', 'wb') as fout:
         pickle.dump(cases_to_result, fout)
 
     print('# of queries: {}'.format(count))
