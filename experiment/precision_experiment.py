@@ -2,7 +2,7 @@ from collections import defaultdict
 from math import sqrt
 from itertools import combinations
 import subprocess
-import pickle as pickle
+import pickle
 import random
 import concurrent.futures as cf
 import sys
@@ -57,7 +57,7 @@ def recommend(query, item_vertex_embedding):
     # only recommendate new envent, if not comment this line
     recommendation_list = [recommendation for recommendation in recommendation_list if item_vertex_embedding[recommendation[1]][1] != 'hpe']
     recommendation_list.sort(reverse=True)
-    return (query, list(map(lambda x: x[1], recommendation_list[1:6])))
+    return (query, list(map(lambda x: x[1], recommendation_list)))
 
 def cosine(v1, v2):
     numerator = 0
@@ -108,6 +108,7 @@ if __name__ == "__main__":
         item_detail_map[i.split(',')[0]] = i
 
     user_watch_list = load_watch_list('./data/precision/transaction_future_answer.data')
+    # PAST_RESULT = pickle.load(open('./result/precision@5_2018_transaction_top300_popular_queries_only_new/span3_iter300/past_query_log.pkl', 'rb'))
 
     # random recommendation
     # seen_events = load_events('../source/entertainment_transactions_v7_Before20161231.data')
@@ -118,7 +119,7 @@ if __name__ == "__main__":
     # user_vertex_embedding, item_vertex_embedding = load_embedding('../log_transaction_data/rep.hpe')
     # _, unseen_vectex_embedding = load_embedding('../log_transaction_data/unseen_data/keyword_setting_span3_iter300/unseen_events_label_cluster_embedding(textrank_w2v_top100queries_strong_user_before2018).txt')
 
-    _, unseen_vectex_embedding_rank = load_embedding('../log_transaction_data/unseen_data/keyword_setting_span3_iter300/unseen_events_label_cluster_embedding(textrank_top100queries_strong_user_before2018).txt')
+    _, unseen_vectex_embedding_rank = load_embedding('../log_transaction_data/unseen_data/keyword_setting_span3_iter300/unseen_events_label_embedding(textrank_top100queries_strong_user_before2018).txt')
     _, unseen_vectex_embedding_tfidf = load_embedding('../log_transaction_data/unseen_data/keyword_setting_span3_iter300/unssen_events_rep_hpe(tfidf_2018unseen_top100queries_strong_user_before2018).txt')
     unseen_vectex_embedding = \
         {key : unseen_vectex_embedding_rank[key] + unseen_vectex_embedding_tfidf[key]
@@ -149,7 +150,7 @@ if __name__ == "__main__":
     with cf.ProcessPoolExecutor(max_workers=20) as executor:
         future_to_user =\
                 {executor.submit(recommend, query, rec_embedding) : user
-                for index, (user, query) in enumerate(query_gen(user_watch_list, rec_embedding, './data/precision@5_1user_1item_top100_popular_query_user_click_10.txt'))
+                for index, (user, query) in enumerate(query_gen(user_watch_list, rec_embedding, './data/precision@5_1user_1item_top300_popular_query_2018.txt'))
                 if index <= 499}
 
         count = 0
@@ -165,23 +166,31 @@ if __name__ == "__main__":
             count += 1
             user = future_to_user[future]
             query_item, recommendation_list = future.result()
+            top_5_recommendation_list = recommendation_list[1:6]
             print('user:', user)
             print('query event:', query_item)
             print(item_detail_map[query_item])
-            for index, recommendation in enumerate(recommendation_list):
+            for index, recommendation in enumerate(top_5_recommendation_list):
                 print("{} Recommendation: {}".format(index, recommendation))
                 # show detail
                 print(item_detail_map[recommendation])
 
+            # The index of the past result
+            # print('='*20)
+            # print("Past result:")
+            # for item in PAST_RESULT[query_item]:
+            #     print("Past rank:", recommendation_list.index(item) - 1, item)
+            #     print(item_detail_map[item])
+
             # Coverage Scoring
-            all_recommendation_set = all_recommendation_set | set(recommendation_list)
+            all_recommendation_set = all_recommendation_set | set(top_5_recommendation_list)
             if query_item not in seen_query:
                 seen_query.add(query_item)
-                total_rec_num += len(recommendation_list)
+                total_rec_num += len(top_5_recommendation_list)
 
             # Edit Distance Scoring
             edit_distance_query_to_rec = \
-                    [fuzz.ratio(item_detail_map[query_item], item_detail_map[rec_item]) for rec_item in recommendation_list]
+                    [fuzz.ratio(item_detail_map[query_item], item_detail_map[rec_item]) for rec_item in top_5_recommendation_list]
             ave_edit_distance_query_to_rec = sum(edit_distance_query_to_rec) / len(edit_distance_query_to_rec)
             total_ave_distance_query_to_rec += ave_edit_distance_query_to_rec
             print('='*20)
@@ -189,16 +198,16 @@ if __name__ == "__main__":
             print("Average Distance (query to rec): {}".format(ave_edit_distance_query_to_rec))
             edit_distance_rec_to_rec = \
                     [fuzz.ratio(item_detail_map[rec_item_first], item_detail_map[rec_item_second])\
-                     for rec_item_first, rec_item_second in combinations(recommendation_list, 2)]
+                     for rec_item_first, rec_item_second in combinations(top_5_recommendation_list, 2)]
             ave_edit_distance_rec_to_rec = sum(edit_distance_rec_to_rec) / len(edit_distance_rec_to_rec)
             total_ave_distance_rec_to_rec += ave_edit_distance_rec_to_rec
             print("Average Distance (rec to rec): {}".format(ave_edit_distance_rec_to_rec))
 
             # Precision and Recall Scoring
             print('='*20)
-            machingNum = len(set(recommendation_list) & set(user_watch_list[user]))
+            machingNum = len(set(top_5_recommendation_list) & set(user_watch_list[user]))
             if machingNum:
-                print('hit eventIDs: {}'.format(set(recommendation_list) & set(user_watch_list[user])))
+                print('hit eventIDs: {}'.format(set(top_5_recommendation_list) & set(user_watch_list[user])))
                 print('='*20)
             precision = machingNum/5
             recall = machingNum/len(user_watch_list[user])
@@ -215,7 +224,7 @@ if __name__ == "__main__":
 
                 ranked_precision = 0
                 ranked_machingNum = 0
-                for index, rec_item in enumerate(recommendation_list):
+                for index, rec_item in enumerate(top_5_recommendation_list):
                     if rec_item in user_watch_list[user]:
                         ranked_machingNum += 1
                         ranked_precision += ranked_machingNum / (index + 1)
@@ -226,9 +235,9 @@ if __name__ == "__main__":
             else:
                 print()
 
-    with open('./result/textrank.pkl', 'wb') as fout:
-        pickle.dump(cases_to_result, fout)
-
+#    with open('./result/precision@5_2018_transaction_top300_popular_queries_only_new/span3_iter300/textrank.pkl', 'wb') as fout:
+#        pickle.dump(cases_to_result, fout)
+#
     print('# of queries: {}'.format(count))
     print('# of queries(precision > 0): {}'.format(maching_count))
     print('Mean Average Edit Distance (query, recommendation): {:.2f}%'.format(total_ave_distance_query_to_rec / count))
