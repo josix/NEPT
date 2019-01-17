@@ -109,6 +109,7 @@ if __name__ == "__main__":
 
     user_watch_list = load_watch_list('./data/precision/transaction_future_answer.data')
     # PAST_RESULT = pickle.load(open('./result/precision@5_2018_transaction_top300_popular_queries_only_new/span3_iter300/past_query_log.pkl', 'rb'))
+    # PAST_RESULT_LABEL = pickle.load(open('./result/precision@5_2018_transaction_top300_popular_queries_only_new/span3_iter300/past_query_log_label.pkl', 'rb'))
 
     # random recommendation
     # seen_events = load_events('../source/entertainment_transactions_v7_Before20161231.data')
@@ -162,6 +163,10 @@ if __name__ == "__main__":
         seen_query = set()
         cases_to_result = {}
         all_recommendation_set = set()
+        # Past result
+        past_avep = 0
+        past_avep_old = 0
+        label_count = 0
         for future in cf.as_completed(future_to_user):
             count += 1
             user = future_to_user[future]
@@ -175,12 +180,38 @@ if __name__ == "__main__":
                 # show detail
                 print(item_detail_map[recommendation])
 
-            # The index of the past result
+            # Past result
             # print('='*20)
-            # print("Past result:")
+            # rerank_past_result = []
             # for item in PAST_RESULT[query_item]:
-            #     print("Past rank:", recommendation_list.index(item) - 1, item)
+            #     rerank_past_result.append((recommendation_list.index(item) - 1, item))
+            # rerank_past_result.sort()
+            # for _, item in rerank_past_result:
             #     print(item_detail_map[item])
+            # print()
+            # print("For old items:")
+            # print("{:50s}{:50s}".format("Current result", "Past result"))
+            # ap = 0
+            # score = 0
+            # ap_old = 0
+            # score_old = 0
+            # for index, ((rerank, item), (item_old)) in enumerate(zip(rerank_past_result, PAST_RESULT[query_item])):
+            #     print("{0:50s}{1:50s}".format(str(rerank)+" Recommendation: "+ str(item), str(index)+" Recommendation: "+ str(item_old)))
+            #     # print("(original_rank: {}, label: {})".format(rerank , item, original_rank, PAST_RESULT_LABEL[(query_item, item)]))
+            #     print("{0:50s}{1:50s}".format(PAST_RESULT_LABEL[(query_item, item)], PAST_RESULT_LABEL[(query_item, item_old)]))
+            #     if PAST_RESULT_LABEL[(query_item, item)] != "" and PAST_RESULT_LABEL[(query_item, item_old)] != "":
+            #         score += 1 if 'O' in PAST_RESULT_LABEL[(query_item, item)] else 0
+            #         ap += (score  / (index+1)) / 5
+            #         score_old += 1 if 'O' in PAST_RESULT_LABEL[(query_item, item_old)] else 0
+            #         ap_old += (score_old / (index+1)) / 5
+            # if ap > 0 and ap_old > 0:
+            #     label_count += 1
+            # if 1 > ap > 0 and 1 > ap_old > 0:
+            #     print("Both O and X")
+            # print("Average Precision:")
+            # print("{0:<50f}{1:<50f}".format(ap, ap_old))
+            # past_avep += ap
+            # past_avep_old += ap_old
 
             # Coverage Scoring
             all_recommendation_set = all_recommendation_set | set(top_5_recommendation_list)
@@ -245,3 +276,6 @@ if __name__ == "__main__":
     print('Coverage Rate: {}'.format(len(all_recommendation_set) / total_rec_num))
     if maching_count:
         print('MAP: {}'.format(total_avep / maching_count))
+        # Past result
+        # print('MAP_on_old_rec: {}'.format(past_avep /  label_count))
+        # print('MAP_on_old_rec_past: {}'.format(past_avep_old /  label_count))
