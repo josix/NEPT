@@ -77,6 +77,16 @@ elif ARGS.textrank_idf:
     except FileNotFoundError:
         pass
 
+# INVOLVE GENERE
+GENERE_TO_KEYWORDS = pickle.load(open('./log_transaction_data/textrank_ch/genere_keywords/genere_to_keywords_textrank.pkl', 'rb'))
+
+ID_TO_GENERE = {}
+with open('./log_transaction_data/textrank_ch/genere_keywords/id_to_genere.csv') as fin:
+    for line in fin:
+        id_, genere = line.strip().split(',')
+        ID_TO_GENERE[id_] = genere
+### END OF INVOLVING GENERE
+
 def gen_event_lbl_emb(concept_embedding, concept_mapping, fp=CORPUS_FILE):
     with open(fp, 'r') as json_file_in:
         item_tags_dict = json.load(json_file_in)
@@ -97,7 +107,7 @@ def gen_event_lbl_emb(concept_embedding, concept_mapping, fp=CORPUS_FILE):
                 annoy_index.add_item(int(id_key), event_vec[id_key])
         # For K-nearest neighbor retrieval
         annoy_index.build(10) # 10 trees
-        annoy_index.save('cc2vec_w2v_cluster.ann')
+        annoy_index.save('cc2vec_textrank.ann')
         return event_vec
 
 def textrank_getkeywords(paragraph):
@@ -144,7 +154,7 @@ def tfidf_getkeywords(paragraph):
     return [word for word, weight in candidate_keyword[:10]]
 
 
-def closest_topK(unseen_event, concept_embedding, concept_mapping, dim, topK=10):
+def closest_topK(unseen_event, concept_embedding, concept_mapping, dim, topK=10, unseen_id=None):
     """
     unseen_event: (title: str, description: str)
     concept_embedding: {word_id : [emb]}
@@ -162,9 +172,21 @@ def closest_topK(unseen_event, concept_embedding, concept_mapping, dim, topK=10)
 
     print('title words:', unseen_event_title_tags)
     print('description words:', unseen_event_description_words)
+    keywords = [*unseen_event_title_tags, *unseen_event_description_words]
+
+    # INVOLVE GENERE
+    try:
+        for word in GENERE_TO_KEYWORDS[ID_TO_GENERE[unseen_id]]:
+            if word not in keywords:
+                keywords.append(word)
+    except KeyError:
+        pass
+    ### END OF INVOLVING GENERE
+
+    print("keywords", keywords)
     # Generate the label embedding for a new item
     event_concept_embeddings = []
-    for word in [*unseen_event_title_tags, *unseen_event_description_words]:
+    for word in keywords:
         try:
             event_concept_embeddings.append(concept_embedding[concept_mapping[word]])
         except KeyError:
@@ -173,7 +195,7 @@ def closest_topK(unseen_event, concept_embedding, concept_mapping, dim, topK=10)
     if unseen_event_vector == []:
         unseen_event_vector = [0] * dim
     annoy_index = AnnoyIndex(dim)
-    annoy_index.load('cc2vec_w2v_cluster.ann')
+    annoy_index.load('cc2vec_textrank.ann')
     # Find topK colest item according to the label embedding
     ranking_list = annoy_index.get_nns_by_vector(unseen_event_vector, 10, search_k=-1, include_distances=True)
     propgation_list = []
@@ -269,12 +291,12 @@ if __name__ == "__main__":
     for id_, content in UNSEEN_DICT.items():
         print('unssenId:', id_)
         ID_LIST =\
-            closest_topK(content, CONCEPT_EMBEDDING, CONCEPT_ID_MAPPING, SIZE)
+            closest_topK(content, CONCEPT_EMBEDDING, CONCEPT_ID_MAPPING, SIZE, unseen_id = id_)
         print(ID_LIST)
         # propagated embedding could be changed
         UNSEEN_EMBEDDING_DICT[id_] = embedding_propgation(ID_LIST, propagated_emb, weight_func=lambda x: 1 / (0.00001 + x)) # params to trained
         print()
-    with open('unseen_events_label_cluster_embedding(textrank_w2v_top100queries_strong_user_before2018).txt', 'wt') as fout:
+    with open('unseen_events_label_embedding(textrank_top100queries_strong_user_before2018_involve_genere).txt', 'wt') as fout:
         fout.write("{}\n".format(len(UNSEEN_EMBEDDING_DICT)))
         for id_, embedding in UNSEEN_EMBEDDING_DICT.items():
             fout.write("{} {}\n".format(id_, ' '.join(map(lambda x:str(round(x, 6)),embedding))))

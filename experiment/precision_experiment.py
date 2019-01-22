@@ -118,9 +118,9 @@ if __name__ == "__main__":
     # model_recommendation
     # hpe/mf + vsm
     # user_vertex_embedding, item_vertex_embedding = load_embedding('../log_transaction_data/rep.hpe')
-    # _, unseen_vectex_embedding = load_embedding('../log_transaction_data/unseen_data/keyword_setting_span3_iter300/unseen_events_label_cluster_embedding(textrank_w2v_top100queries_strong_user_before2018).txt')
+    # _, unseen_vectex_embedding = load_embedding('../log_transaction_data/unseen_data/keyword_setting_span3_iter300/unseen_events_label_embedding(textrank_w2v_top100queries_strong_user_before2018_involve_genere).txt')
 
-    _, unseen_vectex_embedding_rank = load_embedding('../log_transaction_data/unseen_data/keyword_setting_span3_iter300/unseen_events_label_embedding(textrank_top100queries_strong_user_before2018).txt')
+    _, unseen_vectex_embedding_rank = load_embedding('../log_transaction_data/unseen_data/keyword_setting_span3_iter300/unseen_events_label_embedding(textrank_w2v_top100queries_strong_user_before2018_involve_genere).txt')
     _, unseen_vectex_embedding_tfidf = load_embedding('../log_transaction_data/unseen_data/keyword_setting_span3_iter300/unssen_events_rep_hpe(tfidf_2018unseen_top100queries_strong_user_before2018).txt')
     unseen_vectex_embedding = \
         {key : unseen_vectex_embedding_rank[key] + unseen_vectex_embedding_tfidf[key]
@@ -151,7 +151,8 @@ if __name__ == "__main__":
     with cf.ProcessPoolExecutor(max_workers=20) as executor:
         future_to_user =\
                 {executor.submit(recommend, query, rec_embedding) : user
-                for index, (user, query) in enumerate(query_gen(user_watch_list, rec_embedding, './data/precision@5_1user_1item_top300_popular_query_2018.txt'))
+                for index, (user, query) in enumerate(query_gen(user_watch_list, rec_embedding, './data/precision@5_1user_1item_top100_popular_query_user_click_10.txt'))
+                #for index, (user, query) in enumerate(query_gen(user_watch_list, rec_embedding, './data/precision@5_1user_1item_top300_popular_query_2018.txt'))
                 if index <= 499}
 
         count = 0
@@ -266,6 +267,7 @@ if __name__ == "__main__":
             else:
                 print()
 
+#  FOR COMPARE DIFFERENT METHOD ON CERTAIN METRIC
 #    with open('./result/precision@5_2018_transaction_top300_popular_queries_only_new/span3_iter300/textrank.pkl', 'wb') as fout:
 #        pickle.dump(cases_to_result, fout)
 #
