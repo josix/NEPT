@@ -201,7 +201,7 @@ def closest_topK(unseen_event, concept_embedding, concept_mapping, dim, topK=10,
     propgation_list = []
     for id_, score in zip(ranking_list[0], ranking_list[1]):
         propgation_list.append((id_, score))
-    return propgation_list
+    return unseen_event_vector, propgation_list
 
 def embedding_propgation(ranking_list, id_to_emb, weight_func = lambda x : 1):
     accumulate_vector = []
@@ -290,11 +290,11 @@ if __name__ == "__main__":
 
     for id_, content in UNSEEN_DICT.items():
         print('unssenId:', id_)
-        ID_LIST =\
+        UNSEEN_EMBEDDING_DICT[id_], ID_LIST =\
             closest_topK(content, CONCEPT_EMBEDDING, CONCEPT_ID_MAPPING, SIZE, unseen_id = id_)
         print(ID_LIST)
         # propagated embedding could be changed
-        UNSEEN_EMBEDDING_DICT[id_] = embedding_propgation(ID_LIST, propagated_emb, weight_func=lambda x: 1 / (0.00001 + x)) # params to trained
+        # UNSEEN_EMBEDDING_DICT[id_] = embedding_propgation(ID_LIST, propagated_emb, weight_func=lambda x: 1 / (0.00001 + x)) # params to trained
         print()
     with open('unseen_events_label_embedding(textrank_top100queries_strong_user_before2018_involve_genere).txt', 'wt') as fout:
         fout.write("{}\n".format(len(UNSEEN_EMBEDDING_DICT)))
