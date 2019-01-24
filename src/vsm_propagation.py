@@ -103,7 +103,7 @@ def load_unseen(fp=UNSEEN_EVENTS_FILE):
 
 if __name__ == "__main__":
     IDS_DICT, TRAINED_MODEL, DOC_MATRIX = vsm()
-    pickle.dump(TRAINED_MODEL, open('vsm_model.pickle', 'wb'))
+    #pickle.dump(TRAINED_MODEL, open('vsm_model.pickle', 'wb'))
     UNSEEN_DICT = load_unseen()
     UNSEEN_EMBEDDING_DICT = {}
     for id_, (title_string, description) in UNSEEN_DICT.items():
@@ -112,7 +112,7 @@ if __name__ == "__main__":
         ID_LIST =\
             closest_topK(query_string, IDS_DICT, TRAINED_MODEL, DOC_MATRIX.shape[1])
         print(ID_LIST)
-        UNSEEN_EMBEDDING_DICT[id_] = embedding_propgation(ID_LIST, weight_func=lambda x : 1 / ((acos(x / -2 + 1) * 180 / pi) ** 2) if x != 0 else 1)
+        UNSEEN_EMBEDDING_DICT[id_] = embedding_propgation(ID_LIST, weight_func=lambda x : 0.0001 + x)
         print()
     with open('unssen_events_rep_hpe(tfidf_2018unseen_top100queries_strong_user_before2018).txt', 'wt') as fout:
         fout.write("{}\n".format(len(UNSEEN_EMBEDDING_DICT)))

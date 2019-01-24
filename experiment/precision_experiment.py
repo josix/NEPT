@@ -49,10 +49,11 @@ def recommend(query, item_vertex_embedding):
         try:
             cosine_similarity = cosine(query_embedding, item_vertex_embedding[item][0])
         except ZeroDivisionError:
-            print("ERROR ZeroDivisionError: ")
-            print(query, item)
-            print(query_embedding, item_vertex_embedding[item][0])
-            sys.exit()
+            # print("ERROR ZeroDivisionError: ")
+            # print(query, item)
+            # print(query_embedding, item_vertex_embedding[item][0])
+            cosine_similarity = -100
+            #sys.exit()
         recommendation_list.append((cosine_similarity, item))
     # only recommendate new envent, if not comment this line
     recommendation_list = [recommendation for recommendation in recommendation_list if item_vertex_embedding[recommendation[1]][1] != 'hpe']
@@ -108,8 +109,9 @@ if __name__ == "__main__":
         item_detail_map[i.split(',')[0]] = i
 
     user_watch_list = load_watch_list('./data/precision/transaction_future_answer.data')
-    # PAST_RESULT = pickle.load(open('./result/precision@5_2018_transaction_top300_popular_queries_only_new/span3_iter300/past_query_log.pkl', 'rb'))
-    # PAST_RESULT_LABEL = pickle.load(open('./result/precision@5_2018_transaction_top300_popular_queries_only_new/span3_iter300/past_query_log_label.pkl', 'rb'))
+    # Past result
+    # PAST_RESULT = pickle.load(open('./result/precision@5_2018_transaction_top300_popular_queries_only_new/span3_iter300/eyeball/past_query_log.pkl', 'rb'))
+    # PAST_RESULT_LABEL = pickle.load(open('./result/precision@5_2018_transaction_top300_popular_queries_only_new/span3_iter300/eyeball/past_query_log_label.pkl', 'rb'))
 
     # random recommendation
     # seen_events = load_events('../source/entertainment_transactions_v7_Before20161231.data')
@@ -118,10 +120,10 @@ if __name__ == "__main__":
     # model_recommendation
     # hpe/mf + vsm
     # user_vertex_embedding, item_vertex_embedding = load_embedding('../log_transaction_data/rep.hpe')
-    # _, unseen_vectex_embedding = load_embedding('../log_transaction_data/unseen_data/keyword_setting_span3_iter300/unseen_events_label_embedding(textrank_w2v_top100queries_strong_user_before2018_involve_genere).txt')
+    # _, unseen_vectex_embedding = load_embedding('../log_transaction_data/unseen_data/keyword_setting_span3_iter300/average_word/unssen_events_rep_hpe(tfidf_2018unseen_top100queries_strong_user_before2018_without_query).txt')
 
-    _, unseen_vectex_embedding_rank = load_embedding('../log_transaction_data/unseen_data/keyword_setting_span3_iter300/unseen_events_label_embedding(textrank_w2v_top100queries_strong_user_before2018_involve_genere).txt')
-    _, unseen_vectex_embedding_tfidf = load_embedding('../log_transaction_data/unseen_data/keyword_setting_span3_iter300/unssen_events_rep_hpe(tfidf_2018unseen_top100queries_strong_user_before2018).txt')
+    _, unseen_vectex_embedding_rank = load_embedding('../log_transaction_data/unseen_data/keyword_setting_span3_iter300/average_word/unseen_events_label_embedding(textrank_top100queries_strong_user_before2018).txt')
+    _, unseen_vectex_embedding_tfidf = load_embedding('../log_transaction_data/unseen_data/keyword_setting_span3_iter300/average_word/unssen_events_rep_hpe(tfidf_2018unseen_top100queries_strong_user_before2018).txt')
     unseen_vectex_embedding = \
         {key : unseen_vectex_embedding_rank[key] + unseen_vectex_embedding_tfidf[key]
             for key in unseen_vectex_embedding_rank.keys()}

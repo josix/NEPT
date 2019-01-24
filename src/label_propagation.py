@@ -78,13 +78,13 @@ elif ARGS.textrank_idf:
         pass
 
 # INVOLVE GENERE
-GENERE_TO_KEYWORDS = pickle.load(open('./log_transaction_data/textrank_ch/genere_keywords/genere_to_keywords_textrank.pkl', 'rb'))
-
-ID_TO_GENERE = {}
-with open('./log_transaction_data/textrank_ch/genere_keywords/id_to_genere.csv') as fin:
-    for line in fin:
-        id_, genere = line.strip().split(',')
-        ID_TO_GENERE[id_] = genere
+# GENERE_TO_KEYWORDS = pickle.load(open('./log_transaction_data/textrank_ch/genere_keywords/genere_to_keywords_textrank.pkl', 'rb'))
+# 
+# ID_TO_GENERE = {}
+# with open('./log_transaction_data/textrank_ch/genere_keywords/id_to_genere.csv') as fin:
+#     for line in fin:
+#         id_, genere = line.strip().split(',')
+#         ID_TO_GENERE[id_] = genere
 ### END OF INVOLVING GENERE
 
 def gen_event_lbl_emb(concept_embedding, concept_mapping, fp=CORPUS_FILE):
@@ -175,12 +175,12 @@ def closest_topK(unseen_event, concept_embedding, concept_mapping, dim, topK=10,
     keywords = [*unseen_event_title_tags, *unseen_event_description_words]
 
     # INVOLVE GENERE
-    try:
-        for word in GENERE_TO_KEYWORDS[ID_TO_GENERE[unseen_id]]:
-            if word not in keywords:
-                keywords.append(word)
-    except KeyError:
-        pass
+    # try:
+    #     for word in GENERE_TO_KEYWORDS[ID_TO_GENERE[unseen_id]]:
+    #         if word not in keywords:
+    #             keywords.append(word)
+    # except KeyError:
+    #     pass
     ### END OF INVOLVING GENERE
 
     print("keywords", keywords)
@@ -296,7 +296,7 @@ if __name__ == "__main__":
         # propagated embedding could be changed
         # UNSEEN_EMBEDDING_DICT[id_] = embedding_propgation(ID_LIST, propagated_emb, weight_func=lambda x: 1 / (0.00001 + x)) # params to trained
         print()
-    with open('unseen_events_label_embedding(textrank_top100queries_strong_user_before2018_involve_genere).txt', 'wt') as fout:
+    with open('unseen_events_label_embedding(textrank_top100queries_strong_user_before2018).txt', 'wt') as fout:
         fout.write("{}\n".format(len(UNSEEN_EMBEDDING_DICT)))
         for id_, embedding in UNSEEN_EMBEDDING_DICT.items():
             fout.write("{} {}\n".format(id_, ' '.join(map(lambda x:str(round(x, 6)),embedding))))
