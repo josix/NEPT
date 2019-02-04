@@ -37,7 +37,11 @@ if __name__ == "__main__":
                 user, item, user_item_weight = line.strip().split(' ')
                 try:
                     for word, textrank_weight in event_keywords[item]:
-                        weight = textrank_weight * int(user_item_weight)
-                        fout.write('{} {} {}\n'.format(user, word_id_mapping[word], weight))
+                        # on item-word graph
+                        weight = textrank_weight
+                        fout.write('{} {} {}\n'.format(item, word_id_mapping[word], weight))
+                        # on user-word graph
+                        #weight = textrank_weight * int(user_item_weight)
+                        # fout.write('{} {} {}\n'.format(user, word_id_mapping[word], weight))
                 except KeyError:
                     continue

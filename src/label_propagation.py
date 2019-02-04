@@ -294,7 +294,7 @@ if __name__ == "__main__":
             closest_topK(content, CONCEPT_EMBEDDING, CONCEPT_ID_MAPPING, SIZE, unseen_id = id_)
         print(ID_LIST)
         # propagated embedding could be changed
-        # UNSEEN_EMBEDDING_DICT[id_] = embedding_propgation(ID_LIST, propagated_emb, weight_func=lambda x: 1 / (0.00001 + x)) # params to trained
+        UNSEEN_EMBEDDING_DICT[id_] = embedding_propgation(ID_LIST, hpe_event_to_item_emb, weight_func=lambda x: 1 / (0.00001 + x)) # params to trained
         print()
     with open('unseen_events_label_embedding(textrank_top100queries_strong_user_before2018).txt', 'wt') as fout:
         fout.write("{}\n".format(len(UNSEEN_EMBEDDING_DICT)))
