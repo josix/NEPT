@@ -29,7 +29,7 @@ python3 "./script/export.py" -o "./data/export.data" ./data/itemsList.data
 # Turn word2vec format into JSON
 python3 ./script/rep_transform.py -o ./data/rep.json ./data/rep.hpe
 # Segement title
-python3 ./script/segement.py -o ./data/tags.json ./data/eventsTitle.data
+# python3 ./script/segement.py -o ./data/tags.json ./data/eventsTitle.data
 mkdir data/textrank
 # Generate keywords form title and description
 python3 ./script/textrank.py -o ./data/textrank/textrank  ./data/eventsTitle.data
@@ -37,5 +37,7 @@ python3 ./script/textrank.py -o ./data/textrank/textrank  ./data/eventsTitle.dat
 python3 ./script/construct_user_word_graph.py -o ./data/user-label.data ./data/export.data ./data/textrank/textrank.json ./data/textrank/textrank_mapping.txt
 # Train line-2nd on user-word graph
 ./proNet-core/cli/line -train ./data/user-label.data  -save ./data/textrank/rep.line2 -undirected 1 -order 2 -dimensions 128 -sample_times 4 -negative_samples 5 -alpha 0.025 -threads 4
-# Propagate HPE embedding based on user-word graph
+# Generate semantic space embedding
 python3 ./src/label_propagation.py $5 ./data/rep.json ./data/textrank/textrank.json ./data/textrank
+# Generate preference space embedding
+python3 ./src/vsm_propagation.py $5 ./data/rep.json  ./data/textrank.json
