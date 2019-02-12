@@ -40,4 +40,4 @@ python3 ./script/construct_user_word_graph.py -o ./data/user-label.data ./data/e
 # Generate semantic space embedding
 python3 ./src/label_propagation.py $5 ./data/rep.json ./data/textrank/textrank.json ./data/textrank
 # Generate preference space embedding
-python3 ./src/vsm_propagation.py $5 ./data/rep.json  ./data/textrank.json
+python3 ./src/vsm_propagation.py $5 ./data/rep.json  ./data/textrank/textrank.json
