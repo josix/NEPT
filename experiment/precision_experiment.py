@@ -120,13 +120,13 @@ if __name__ == "__main__":
     # model_recommendation
     # hpe/mf + vsm
     # user_vertex_embedding, item_vertex_embedding = load_embedding('../log_transaction_data/rep.hpe')
-    _, unseen_vectex_embedding = load_embedding('../log_transaction_data/unseen_data/keyword_setting_span3_iter300/average_word_event_label_indexed/unseen_events_label_embedding(textrank_top100queries_strong_user_before2018).txt')
+    # _, unseen_vectex_embedding = load_embedding('../log_transaction_data/unseen_data/keyword_setting_span3_iter300/average_word_hpe_event_label/unseen_events_label_embedding(textrank_idf_top100queries_strong_user_before2018).txt')
 
-    # _, unseen_vectex_embedding_rank = load_embedding('../log_transaction_data/unseen_data/keyword_setting_span3_iter300/average_word_event_label/unseen_events_label_embedding(textrank_top100queries_strong_user_before2018).txt')
-    # _, unseen_vectex_embedding_tfidf = load_embedding('../log_transaction_data/unseen_data/keyword_setting_span3_iter300/average_word_event_label_indexed/unseen_events_label_embedding(textrank_top100queries_strong_user_before2018).txt')
-    # unseen_vectex_embedding = \
-    #     {key : unseen_vectex_embedding_rank[key] + unseen_vectex_embedding_tfidf[key]
-    #         for key in unseen_vectex_embedding_rank.keys()}
+    _, unseen_vectex_embedding_rank = load_embedding('../log_transaction_data/unseen_data/keyword_setting_span3_iter300/average_word_event_label/unseen_events_label_embedding(textrank_w2v_top100queries_strong_user_before2018).txt')
+    _, unseen_vectex_embedding_tfidf = load_embedding('../log_transaction_data/unseen_data/keyword_setting_span3_iter300/average_word_hpe_event_label_indexed/unseen_events_label_embedding(textrank_w2v_top100queries_strong_user_before2018).txt')
+    unseen_vectex_embedding = \
+        {key : unseen_vectex_embedding_rank[key] + unseen_vectex_embedding_tfidf[key]
+            for key in unseen_vectex_embedding_rank.keys()}
 
     #rec_embedding = {**{ key:(value, 'hpe') for key, value in item_vertex_embedding.items() },
     #                 **{ key:(value, 'propagation') for key, value in unseen_vectex_embedding.items()} }
