@@ -35,7 +35,7 @@ mkdir data/textrank
 # Generate keywords form title and description
 python3 ./script/textrank.py -o ./data/textrank/textrank  ./source/events.csv
 # Construct user-label(word) graph
-python3 ./script/construct_user_word_graph.py -o ./data/user-label.data ./data/export.data ./data/textrank/textrank.json ./data/textrank/textrank_mapping.txt
+python3 ./script/construct_user_word_graph.py -o ./data/user-label.data ./source/user-item.data./data/textrank/textrank.json ./data/textrank/textrank_mapping.txt
 # Train line-2nd on user-word graph
 ./proNet-core/cli/line -train ./data/user-label.data  -save ./data/textrank/rep.line2 -undirected 1 -order 2 -dimensions 128 -sample_times 4 -negative_samples 5 -alpha 0.025 -threads 4
 # Generate semantic space embedding
