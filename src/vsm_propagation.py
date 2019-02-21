@@ -112,7 +112,7 @@ if __name__ == "__main__":
         ID_LIST =\
             closest_topK(query_string, IDS_DICT, TRAINED_MODEL, DOC_MATRIX.shape[1])
         print(ID_LIST)
-        UNSEEN_EMBEDDING_DICT[id_] = embedding_propgation(ID_LIST, weight_func=lambda x : 0.0001 + x)
+        UNSEEN_EMBEDDING_DICT[id_] = embedding_propgation(ID_LIST, weight_func=lambda x : 1/ (0.00001 + x))
         print()
     with open('unssen_events_rep_hpe(tfidf_2018unseen_top100queries_strong_user_before2018).txt', 'wt') as fout:
         fout.write("{}\n".format(len(UNSEEN_EMBEDDING_DICT)))
