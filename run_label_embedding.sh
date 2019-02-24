@@ -26,7 +26,7 @@
 
 mkdir data
 # HPE trainning
-./proNet-core/cli/hpe -train ./source/user-item.data -save ./data/rep.hpe -undirected 1 -dimensions 128 -reg 0.01 -sample_times 5 -walk_steps 5 -negative_samples 5 -alpha 0.025 -threads 4
+./proNet-core/cli/hpe -train ./source/user-item.data -save ./data/rep.hpe -undirected 1 -dimensions 128 -reg 0.01 -sample_times 5 -walk_steps 5 -negative_samples 5 -alpha 0.025 -threads 20
 # Turn word2vec format into JSON
 python3 ./script/rep_transform.py -o ./data/rep.json ./data/rep.hpe
 # Segement title
@@ -35,9 +35,9 @@ mkdir data/textrank
 # Generate keywords form title and description
 python3 ./script/textrank.py -o ./data/textrank/textrank  ./source/events.csv
 # Construct user-label(word) graph
-python3 ./script/construct_user_word_graph.py -o ./data/user-label.data ./source/user-item.data./data/textrank/textrank.json ./data/textrank/textrank_mapping.txt
+python3 ./script/construct_user_word_graph.py -o ./data/textrank/user-label.data ./source/user-item.data ./data/textrank/textrank.json ./data/textrank/textrank_mapping.txt
 # Train line-2nd on user-word graph
-./proNet-core/cli/line -train ./data/user-label.data  -save ./data/textrank/rep.line2 -undirected 1 -order 2 -dimensions 128 -sample_times 4 -negative_samples 5 -alpha 0.025 -threads 4
+./proNet-core/cli/line -train ./data/textrank/user-label.data  -save ./data/textrank/rep.line2 -undirected 1 -order 2 -dimensions 128 -sample_times 40 -negative_samples 5 -alpha 0.025 -threads 20
 # Generate semantic space embedding
 python3 ./src/label_propagation.py ./source/unseen_2018_events_description.csv ./data/rep.json ./data/textrank/textrank.json ./data/textrank
 # Generate preference space embedding
