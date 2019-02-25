@@ -10,3 +10,4 @@ source
 script/textrank_*.py
 experiment/graphsage_propagation/*
 .vscode/*
+target_source/*
