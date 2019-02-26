@@ -1,12 +1,24 @@
+import argparse
 import random
 
+PARSER = argparse.ArgumentParser()
+PARSER.add_argument("user_to_items",
+                    type=str,
+                    help="User-items data")
+PARSER.add_argument("popular_events",
+                    type=str,
+                    help="top k popular events data")
+
+ARGS = PARSER.parse_args()
+FILEPATH = ARGS.user_to_items
+POP_FILEPATH = ARGS.popular_events
 random.seed(11)
 def load_popular_event() -> set:
-    with open('../../source/query_source/popular_events_100.txt') as fin:
+    with open(POP_FILEPATH) as fin:
         return {line.strip().split(',')[0] for line in fin}
 
 popular_events = load_popular_event()
-with open('../../log_transaction_data/user_to_items_before2018.data', 'rt') as fin:
+with open(FILEPATH, 'rt') as fin:
     for line in fin:
         user, *item_list = line.strip().split(' ')
         item_num = len(item_list)
