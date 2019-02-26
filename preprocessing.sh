@@ -45,3 +45,9 @@ cat $IM_DIR/unseen_2018_events_description.csv $IM_DIR/query_item_description.da
 # Generate testing answer data
 awk -f ./preprocessing/extract_user_item_frequency_2018.awk $RAW_DATA_DIR/entertainment_transactions_20180903.csv > $IM_DIR/user-item-2018.data
 awk -f ./preprocessing/user_to_items.awk $IM_DIR/user-item-2018.data > ./experiment/data/precision/transaction_future_answer.data
+
+# Generate metadata
+mkdir -p ../kktix/preproecessed_data
+awk -F, '{OFS=","; print $1, $4, $5}' $RAW_DATA_DIR/entertainment_events_20180903.csv | sort -u > ../kktix/preproecessed_data/eventsDetailMap_20180903.data
+awk -F, '{OFS=","; print $1, $4, $5}' $RAW_DATA_DIR/entertainment_events_20180523.csv | sort -u > ../kktix/preproecessed_data/eventsDetailMap_20180523.data
+awk -F, 'BEGIN{OFS=","} {print $11,$12,$13}' $RAW_DATA_DIR/entertainment_transactions_v7.csv | sort | uniq  > ../kktix/preproecessed_data/eventDetailMap_v7.csv
