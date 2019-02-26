@@ -48,6 +48,6 @@ awk -f ./preprocessing/user_to_items.awk $IM_DIR/user-item-2018.data > ./experim
 
 # Generate metadata
 mkdir -p ../kktix/preproecessed_data
-awk -F, '{OFS=","; print $1, $4, $5}' $RAW_DATA_DIR/entertainment_events_20180903.csv | sort -u > ../kktix/preproecessed_data/eventsDetailMap_20180903.data
-awk -F, '{OFS=","; print $1, $4, $5}' $RAW_DATA_DIR/entertainment_events_20180523.csv | sort -u > ../kktix/preproecessed_data/eventsDetailMap_20180523.data
+awk -F, '{OFS=","; print $1, $4, $5}' $RAW_DATA_DIR/entertainment_events_20180903.csv | sort -u > ../kktix/preproecessed_data/eventDetailMap_20180903.csv
+awk -F, '{OFS=","; print $1, $4, $5}' $RAW_DATA_DIR/entertainment_events_20180523.csv | sort -u > ../kktix/preproecessed_data/eventDetailMap_20180523.csv
 awk -F, 'BEGIN{OFS=","} {print $11,$12,$13}' $RAW_DATA_DIR/entertainment_transactions_v7.csv | sort | uniq  > ../kktix/preproecessed_data/eventDetailMap_v7.csv
