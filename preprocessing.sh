@@ -16,7 +16,7 @@ awk -F, ' BEGIN{
 awk -f ./preprocessing/extract_user_item_frequency.awk $IM_DIR/entertainment_transactions_v7_Before20161231.data > $IM_DIR/user-item-frequency.data
 awk -f ./preprocessing/filter_access.awk $IM_DIR/user-item-frequency.data > $IM_DIR/transaction_export.data
 
-awk -f ./preprocessing/extract_ip_item_frequency.awk /tmp2/KKTeam/KKTIX/kktix_cc_elb_log_201706 > $IM_DIR/kktix_log_201706.data
+awk -f ./preprocessing/extract_ip_item_frequency.awk $RAW_DATA_DIR/kktix_cc_elb_log_201706 > $IM_DIR/kktix_log_201706.data
 awk -f ./preprocessing/filter_access.awk $IM_DIR/kktix_log_201706.data > $IM_DIR/log_export.data
 cat $IM_DIR/*_export.data > $TARGET_SOURCE/user-item.data
 
