@@ -1,5 +1,14 @@
-#/bin/bash
-RAW_DATA_DIR="/path/to/raw/data"
+#! /bin/sh
+USAGE="usage: preprocessing.sh source query_target answer_target metadata_target\n\nsource:\tThe directory of the raw data\nquery_target:\tThe directory to store experiment query file\nanswer_target:\tThe directory to store experiment answer file\nmetadat_taret:\tThe directory to stor metadata used in experiment"
+test "$#" != "4" && echo "$USAGE" && exit 1
+
+if ! [ -e $1 ]
+then
+  echo "$USAGE\n \"$1\" not exists"
+  exit 1
+fi
+
+RAW_DATA_DIR=$1
 IM_DIR="./intermediate_data"
 TARGET_SOURCE="./target_source"
 
@@ -26,8 +35,7 @@ awk '{print $2}' $TARGET_SOURCE/user-item.data | sort -u | awk '{print "^"$0","}
 grep -f $IM_DIR/training_event_pattern.txt $IM_DIR/events_description_v7.data> $TARGET_SOURCE/events.csv
 
 # Generate testing query data
-EXP_QUERY_DIR="/path/to/store/exp/query/setting" # need to sync with experiment script
-# EXP_QUERY_DIR="./experiment/data"
+EXP_QUERY_DIR=$2 # need to sync with experiment script
 mkdir $EXP_QUERY_DIR
 awk -f ./preprocessing/user_to_items.awk $IM_DIR/user-item-frequency.data > $IM_DIR/user_to_items_training.data
 cut -f 2,3 -d, $IM_DIR/entertainment_transactions_v7_Before20161231.data | sort -t, -k 2 | uniq -c | sort -r -k 1 -n| head -n 500 > $IM_DIR/popular_events_with_count.txt
@@ -44,15 +52,13 @@ grep -f $IM_DIR/query_item.data $TARGET_SOURCE/events.csv >  $IM_DIR/query_item_
 cat $IM_DIR/unseen_2018_events_description.csv $IM_DIR/query_item_description.data > $TARGET_SOURCE/unseen_2018_events_description.csv
 
 # Generate testing answer data
-EXP_ANSWER_DIR="/path/to/store/exp/answer/setting" # need to sync with experiment script
-# EXP_ANSWER_DIR="./experiment/data/precision"
+EXP_ANSWER_DIR=$3
 mkdir $EXP_ANSWER_DIR
 awk -f ./preprocessing/extract_user_item_frequency_2018.awk $RAW_DATA_DIR/entertainment_transactions_20180903.csv > $IM_DIR/user-item-2018.data
 awk -f ./preprocessing/user_to_items.awk $IM_DIR/user-item-2018.data > $EXP_ANSWER_DIR/transaction_future_answer.data
 
 # Generate metadata
-META_DIR="/path/to/store/metadata" # need to sync with experiment script
-# META_DIR="../kktix/preproecessed_data"
+META_DIR=$4
 mkdir -p $META_DIR
 awk -F, '{OFS=","; print $1, $4, $5}' $RAW_DATA_DIR/entertainment_events_20180903.csv | sort -u > $META_DIR/eventDetailMap_20180903.csv
 awk -F, '{OFS=","; print $1, $4, $5}' $RAW_DATA_DIR/entertainment_events_20180523.csv | sort -u > $META_DIR/eventDetailMap_20180523.csv
