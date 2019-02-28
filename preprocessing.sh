@@ -38,7 +38,7 @@ grep -f $IM_DIR/training_event_pattern.txt $IM_DIR/events_description_v7.data> $
 EXP_QUERY_DIR=$2 # need to sync with experiment script
 mkdir $EXP_QUERY_DIR
 awk -f ./preprocessing/user_to_items.awk $IM_DIR/user-item-frequency.data > $IM_DIR/user_to_items_training.data
-cut -f 2,3 -d, $IM_DIR/entertainment_transactions_v7_Before20161231.data | sort -t, -k 2 | uniq -c | sort -r -k 1 -n| head -n 500 > $IM_DIR/popular_events_with_count.txt
+cut -f 2,3 -d, $IM_DIR/entertainment_transactions_v7_Before20161231.data | sort -t, -k 2 | uniq -c | sort -r -k 1 -n > $IM_DIR/popular_events_with_count.txt
 awk '{$1=""; print $0}' $IM_DIR/popular_events_with_count.txt| head -n 100 > $IM_DIR/popular_events_100.txt
 python3 ./experiment/query_generator/precision_query_generator.py $IM_DIR/user_to_items_training.data $IM_DIR/popular_events_100.txt > $EXP_QUERY_DIR/precision@5_1user_1item_top100_popular_query_user_click_10.txt
 
