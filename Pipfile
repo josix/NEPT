@@ -4,7 +4,6 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-tensorflow = "*"
 scikit-learn = "*"
 numpy = "*"
 scipy = "*"
@@ -14,8 +13,9 @@ tqdm = "*"
 fuzzywuzzy = "*"
 python-levenshtein = "*"
 jieba = "*"
-keras = "*"
 sklearn = "*"
+"beautifulsoup4" = "*"
+lxml = "*"
 
 [dev-packages]
 
