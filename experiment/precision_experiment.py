@@ -6,14 +6,32 @@ import pickle
 import random
 import concurrent.futures as cf
 import sys
+import argparse
 
 from fuzzywuzzy import fuzz
 
+PARSER = argparse.ArgumentParser()
+PARSER.add_argument("--random",
+                    type=bool,
+                    default=False,
+                    help="Using random recommendation.")
+PARSER.add_argument("--embedding",
+                    type=bool,
+                    default=False,
+                    help="Using embedding recommendation.")
+PARSER.add_argument("--single",
+                    type=str,
+                    help="Using single embedding recommendation.")
+PARSER.add_argument("--concat",
+                    nargs='+',
+                    type=str,
+                    help="Using concat embedding recommendation.")
+ARGS = PARSER.parse_args()
 def load_events(path):
     with open(path, 'rt') as fin:
         training_id = []
         for line in fin:
-            user, item, title = line.strip().split(',')
+            item, *_ = line.strip().split(',')
             training_id.append(item)
         item_set =  set(training_id)
     return item_set
@@ -72,16 +90,9 @@ def cosine(v1, v2):
     denominator = sqrt(x_square_summation) * sqrt(y_square_summation)
     return numerator / denominator
 
-def random_recommendation(query, item_set, item_detail_map=None):
-    print('query event:', query)
-    print(item_detail_map[query])
+def random_recommendation(query, item_set):
     recommendation_list = random.sample(list(item_set), 10)
-    for index, recommendation in enumerate(recommendation_list):
-        print("{} Recommendation: {}".format(index, recommendation))
-        # show detail
-        print(item_detail_map[recommendation])
-    return recommendation_list
-
+    return (query, recommendation_list)
 
 def popularity_recommendation(query, recommendation_list, item_detail_map=None):
     print('query event:', query)
@@ -113,49 +124,40 @@ if __name__ == "__main__":
     # PAST_RESULT = pickle.load(open('./result/precision@5_2018_transaction_top300_popular_queries_only_new/span3_iter300/eyeball/past_query_log.pkl', 'rb'))
     # PAST_RESULT_LABEL = pickle.load(open('./result/precision@5_2018_transaction_top300_popular_queries_only_new/span3_iter300/eyeball/past_query_log_label.pkl', 'rb'))
 
-    # random recommendation
-    # seen_events = load_events('../source/entertainment_transactions_v7_Before20161231.data')
-    # unseen_events = load_events('../source/entertainment_transactions_v7_After20161231.data')
-
     # model_recommendation
     # hpe/mf + vsm
-    # user_vertex_embedding, item_vertex_embedding = load_embedding('../log_transaction_data/rep.hpe')
-    # _, unseen_vectex_embedding = load_embedding('../log_transaction_data/unseen_data/keyword_setting_span3_iter300/average_word_hpe_event_label/unseen_events_label_embedding(textrank_idf_top100queries_strong_user_before2018).txt')
-
-    _, unseen_vectex_embedding_rank = load_embedding('../unseen_events_label_embedding(textrank_top100queries_strong_user_before2018).txt')
-    _, unseen_vectex_embedding_tfidf = load_embedding('../unssen_events_rep_hpe(tfidf_2018unseen_top100queries_strong_user_before2018).txt')
-    unseen_vectex_embedding = \
-        {key : unseen_vectex_embedding_rank[key] + unseen_vectex_embedding_tfidf[key]
-            for key in unseen_vectex_embedding_rank.keys()}
+    unseen_vectex_embedding_rank = None
+    if ARGS.single:
+        # user_vertex_embedding, item_vertex_embedding = load_embedding('../log_transaction_data/rep.hpe')
+        _, unseen_vectex_embedding = load_embedding(ARGS.single)
+    elif ARGS.concat:
+        _, unseen_vectex_embedding_rank = load_embedding(ARGS.concat[0])
+        _, unseen_vectex_embedding_tfidf = load_embedding(ARGS.concat[1])
+        unseen_vectex_embedding = \
+            {key : unseen_vectex_embedding_rank[key] + unseen_vectex_embedding_tfidf[key]
+                for key in unseen_vectex_embedding_rank.keys()}
 
     #rec_embedding = {**{ key:(value, 'hpe') for key, value in item_vertex_embedding.items() },
     #                 **{ key:(value, 'propagation') for key, value in unseen_vectex_embedding.items()} }
     rec_embedding = { key:(value, 'propagation') for key, value in unseen_vectex_embedding.items()}
 
-    # GraphSAGE
-    # _, rec_embedding = load_embedding('../graphSAGE_data/graphsage_mean_small_0.00001_256/rep.graphsage')
-
-    # popularity_recommendation
-    # command = "cat ../source/entertainment_transactions_v7_Before20161231.data ../source/entertainment_transactions_v7_After20161231.data\
-    #         | awk -F, 'BEGIN{item[$2]=0}{item[$2] = item[$2] + 1}END{for(i in item){print i, item[i]}}'"
-    # result = subprocess.check_output(command, shell=True).decode('utf-8').split('\n')
-    # popularity_list = [(int(i.split()[1]), i.split()[0]) for i in result if len(i.split()) == 2]
-    # popularity_list.sort(reverse=True)
-    # popularity_list = list(map(lambda x: x[1], popularity_list[:10]))
-
-    # random_recommendation
-    # recommendation_list = random_recommendation(query_item, seen_events | unseen_events, item_detail_map)
-
-    # popularity_recommendation
-    # recommendation_list = popularity_recommendation(query_item, popularity_list, item_detail_map)
-
     # model_recommendation
     with cf.ProcessPoolExecutor(max_workers=20) as executor:
-        future_to_user =\
-                {executor.submit(recommend, query, rec_embedding) : user
-                for index, (user, query) in enumerate(query_gen(user_watch_list, rec_embedding, './data/precision@5_1user_1item_top100_popular_query_user_click_10.txt'))
-                #for index, (user, query) in enumerate(query_gen(user_watch_list, rec_embedding, './data/precision@5_1user_1item_top300_popular_query_2018.txt'))
-                if index <= 499}
+        future_to_user = None
+        if ARGS.random:
+            # random recommendation
+            unseen_events = load_events('../source/unseen_2018_events_description.csv')
+            future_to_user =\
+                    {executor.submit(random_recommendation, query, unseen_events) : user
+                    for index, (user, query) in enumerate(query_gen(user_watch_list, rec_embedding, './data/precision@5_1user_1item_top100_popular_query_user_click_10.txt'))
+                    #for index, (user, query) in enumerate(query_gen(user_watch_list, rec_embedding, './data/precision@5_1user_1item_top300_popular_query_2018.txt'))
+                    if index <= 499}
+        elif ARGS.embedding:
+            future_to_user =\
+                    {executor.submit(recommend, query, rec_embedding) : user
+                    for index, (user, query) in enumerate(query_gen(user_watch_list, rec_embedding, './data/precision@5_1user_1item_top100_popular_query_user_click_10.txt'))
+                    #for index, (user, query) in enumerate(query_gen(user_watch_list, rec_embedding, './data/precision@5_1user_1item_top300_popular_query_2018.txt'))
+                    if index <= 499}
 
         count = 0
         maching_count = 0
@@ -275,8 +277,9 @@ if __name__ == "__main__":
 #
     print('# of queries: {}'.format(count))
     print('# of queries(precision > 0): {}'.format(maching_count))
-    print('Mean Average Edit Distance (query, recommendation): {:.2f}%'.format(total_ave_distance_query_to_rec / count))
-    print('Mean Average Edit Distance (recommendation, recommendation): {:.2f}%'.format(total_ave_distance_rec_to_rec / count))
+    if count:
+        print('Mean Average Edit Distance (query, recommendation): {:.2f}%'.format(total_ave_distance_query_to_rec / count))
+        print('Mean Average Edit Distance (recommendation, recommendation): {:.2f}%'.format(total_ave_distance_rec_to_rec / count))
     print('Coverage Rate: {}'.format(len(all_recommendation_set) / total_rec_num))
     if maching_count:
         print('MAP: {}'.format(total_avep / maching_count))
