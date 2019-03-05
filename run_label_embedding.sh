@@ -21,8 +21,8 @@ python3 ./script/textrank.py -o $TARGET_DIR/textrank/textrank  $SOURCE_DIR/event
 # Construct user-label(word) graph
 python3 ./script/construct_user_word_graph.py -o $TARGET_DIR/textrank/user-label.data $SOURCE_DIR/user-item.data $TARGET_DIR/textrank/textrank.json $TARGET_DIR/textrank/textrank_mapping.txt
 # Train line-2nd on user-word graph
-./proNet-core/cli/line -train $TARGET_DIR/textrank/user-label.data  -save $TARGET_DIR/textrank/rep.line2 -undirected 1 -order 2 -dimensions 128 -sample_times 40 -negative_samples 5 -alpha 0.025 -threads 20
+./proNet-core/cli/line -train $TARGET_DIR/textrank/user-label.data  -save $TARGET_DIR/textrank/rep.line2 -undirected 1 -order 2 -dimensions 128 -sample_times 400 -negative_samples 5 -alpha 0.025 -threads 20
 # Generate semantic space embedding
 python3 ./src/label_propagation.py $SOURCE_DIR/unseen_2018_events_description.csv $TARGET_DIR/rep.json $TARGET_DIR/textrank/textrank.json $TARGET_DIR/textrank
 # Generate preference space embedding
-python3 ./src/vsm_propagation.py $SOURCE_DIR/unseen_2018_events_description.csv $TARGET_DIR/rep.json  $TARGET_DIR/textrank/textrank.json
+python3 ./src/vsm_propagation.py --content_space_index 1 $SOURCE_DIR/unseen_2018_events_description.csv $TARGET_DIR/rep.json  $TARGET_DIR/textrank/textrank.json --output "unssen_events_rep_hpe(tfidf_2018unseen_top100queries_strong_user_before2018).txt"

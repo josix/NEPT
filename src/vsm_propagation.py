@@ -22,6 +22,18 @@ PARSER.add_argument("embedding_file",
 PARSER.add_argument("corpus_file",
                     type=str,
                     help="The items' title text file (json) for training vsm")
+PARSER.add_argument("--output",
+                    type=str,
+                    default="rep.txt",
+                    help="The output name of the generated embedding file.")
+PARSER.add_argument("--content_space_index",
+                    type=bool,
+                    default=False,
+                    help="Using TFIDF VSM as index, and average passing embedding as generated embedding.")
+PARSER.add_argument("--tfidf",
+                    type=bool,
+                    default=False,
+                    help="Using TFIDF as generated embedding.")
 ARGS = PARSER.parse_args()
 UNSEEN_EVENTS_FILE = ARGS.unseen_event_file
 EMBEDDING_FILE = ARGS.embedding_file
@@ -100,6 +112,13 @@ def load_unseen(fp=UNSEEN_EVENTS_FILE):
             unseen_dict[id_] = (title, description)
         return unseen_dict
 
+def get_unseen_tfidf(unseen_event, model, dim):
+    unseen_even_tags = jieba.analyse.extract_tags(unseen_event)
+    unseen_event_vector = [0] * dim
+    for tag in unseen_even_tags:
+        if tag in model.vocabulary_:
+            unseen_event_vector[model.vocabulary_[tag]] += model.idf_[model.vocabulary_[tag]]
+    return unseen_event_vector
 
 if __name__ == "__main__":
     IDS_DICT, TRAINED_MODEL, DOC_MATRIX = vsm()
@@ -109,12 +128,16 @@ if __name__ == "__main__":
     for id_, (title_string, description) in UNSEEN_DICT.items():
         print('unssenId:', id_)
         query_string = title_string + description
-        ID_LIST =\
-            closest_topK(query_string, IDS_DICT, TRAINED_MODEL, DOC_MATRIX.shape[1])
-        print(ID_LIST)
-        UNSEEN_EMBEDDING_DICT[id_] = embedding_propgation(ID_LIST, weight_func=lambda x : 1/ (0.00001 + x))
-        print()
-    with open('unssen_events_rep_hpe(tfidf_2018unseen_top100queries_strong_user_before2018).txt', 'wt') as fout:
+        if ARGS.content_space_index:
+            ID_LIST =\
+                closest_topK(query_string, IDS_DICT, TRAINED_MODEL, DOC_MATRIX.shape[1])
+            print(ID_LIST)
+            UNSEEN_EMBEDDING_DICT[id_] = embedding_propgation(ID_LIST, weight_func=lambda x : 1/ (0.00001 + x))
+            print()
+        elif ARGS.tfidf:
+            # Generate item tfidf vector without composition
+            UNSEEN_EMBEDDING_DICT[id_] = get_unseen_tfidf(query_string, TRAINED_MODEL, DOC_MATRIX.shape[1])
+    with open(ARGS.output, 'wt') as fout:
         fout.write("{}\n".format(len(UNSEEN_EMBEDDING_DICT)))
         for id_, embedding in UNSEEN_EMBEDDING_DICT.items():
             fout.write("{} {}\n".format(id_, ' '.join(map(lambda x:str(round(x, 6)),embedding))))
