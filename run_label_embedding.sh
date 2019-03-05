@@ -26,3 +26,6 @@ python3 ./script/construct_user_word_graph.py -o $TARGET_DIR/textrank/user-label
 python3 ./src/label_propagation.py $SOURCE_DIR/unseen_2018_events_description.csv $TARGET_DIR/rep.json $TARGET_DIR/textrank/textrank.json $TARGET_DIR/textrank
 # Generate preference space embedding
 python3 ./src/vsm_propagation.py --content_space_index 1 $SOURCE_DIR/unseen_2018_events_description.csv $TARGET_DIR/rep.json  $TARGET_DIR/textrank/textrank.json --output "unssen_events_rep_hpe(tfidf_2018unseen_top100queries_strong_user_before2018).txt"
+
+# Baseline Model Training
+python3 ../src/vsm_propagation.py --tfidf 1 $SOURCE_DIR/unseen_2018_events_description.csv $TARGET_DIR/rep.json  $TARGET_DIR/textrank/textrank.json --output "tfidf_vsm.txt"
