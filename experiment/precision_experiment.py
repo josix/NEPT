@@ -9,6 +9,7 @@ import sys
 import argparse
 
 from fuzzywuzzy import fuzz
+from annoy import AnnoyIndex
 
 PARSER = argparse.ArgumentParser()
 PARSER.add_argument("--random",
@@ -19,6 +20,9 @@ PARSER.add_argument("--embedding",
                     type=bool,
                     default=False,
                     help="Using embedding recommendation.")
+PARSER.add_argument("--annoy",
+                    type=str,
+                    help="Using the file to build annoy and find nearest-neighbor recommendation.")
 PARSER.add_argument("--single",
                     type=str,
                     help="Using single embedding recommendation.")
@@ -94,6 +98,11 @@ def random_recommendation(query, item_set):
     recommendation_list = random.sample(list(item_set), 10)
     return (query, recommendation_list)
 
+def annoy_recommend(query):
+    global annoy_index
+    ranking_list = annoy_index.get_nns_by_item(int(query), 10, search_k=-1, include_distances=True)
+    return (query, [str(item) for item in ranking_list[0]])
+
 def popularity_recommendation(query, recommendation_list, item_detail_map=None):
     print('query event:', query)
     print(item_detail_map[query])
@@ -136,6 +145,12 @@ if __name__ == "__main__":
         unseen_vectex_embedding = \
             {key : unseen_vectex_embedding_rank[key] + unseen_vectex_embedding_tfidf[key]
                 for key in unseen_vectex_embedding_rank.keys()}
+    elif ARGS.annoy:
+        _, unseen_vectex_embedding = load_embedding(ARGS.annoy)
+        annoy_index = AnnoyIndex(len(list(unseen_vectex_embedding.values())[0]))
+        for id_, vector in unseen_vectex_embedding.items():
+            annoy_index.add_item(int(id_), vector)
+        annoy_index.build(10)
 
     #rec_embedding = {**{ key:(value, 'hpe') for key, value in item_vertex_embedding.items() },
     #                 **{ key:(value, 'propagation') for key, value in unseen_vectex_embedding.items()} }
@@ -155,6 +170,12 @@ if __name__ == "__main__":
         elif ARGS.embedding:
             future_to_user =\
                     {executor.submit(recommend, query, rec_embedding) : user
+                    for index, (user, query) in enumerate(query_gen(user_watch_list, rec_embedding, './data/precision@5_1user_1item_top100_popular_query_user_click_10.txt'))
+                    #for index, (user, query) in enumerate(query_gen(user_watch_list, rec_embedding, './data/precision@5_1user_1item_top300_popular_query_2018.txt'))
+                    if index <= 499}
+        elif ARGS.annoy:
+            future_to_user =\
+                    {executor.submit(annoy_recommend, query) : user
                     for index, (user, query) in enumerate(query_gen(user_watch_list, rec_embedding, './data/precision@5_1user_1item_top100_popular_query_user_click_10.txt'))
                     #for index, (user, query) in enumerate(query_gen(user_watch_list, rec_embedding, './data/precision@5_1user_1item_top300_popular_query_2018.txt'))
                     if index <= 499}
