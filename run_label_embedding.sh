@@ -28,4 +28,4 @@ python3 ./src/label_propagation.py $SOURCE_DIR/unseen_2018_events_description.cs
 python3 ./src/vsm_propagation.py --content_space_index 1 $SOURCE_DIR/unseen_2018_events_description.csv $TARGET_DIR/rep.json  $TARGET_DIR/textrank/textrank.json --output "unssen_events_rep_hpe(tfidf_2018unseen_top100queries_strong_user_before2018).txt"
 
 # Baseline Model Training
-python3 ../src/vsm_propagation.py --tfidf 1 $SOURCE_DIR/unseen_2018_events_description.csv $TARGET_DIR/rep.json  $TARGET_DIR/textrank/textrank.json --output "tfidf_vsm.txt"
+python3 ./src/vsm_propagation.py --tfidf 1 $SOURCE_DIR/unseen_2018_events_description.csv $TARGET_DIR/rep.json  $TARGET_DIR/textrank/textrank.json --output "tfidf_vsm.txt"
