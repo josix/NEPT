@@ -16,6 +16,7 @@ jieba = "*"
 sklearn = "*"
 "beautifulsoup4" = "*"
 lxml = "*"
+implicit = "*"
 
 [dev-packages]
 
