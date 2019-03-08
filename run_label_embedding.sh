@@ -29,3 +29,4 @@ python3 ./src/vsm_propagation.py --content_space_index 1 $SOURCE_DIR/unseen_2018
 
 # Baseline Model Training
 python3 ./src/vsm_propagation.py --tfidf 1 $SOURCE_DIR/unseen_2018_events_description.csv $TARGET_DIR/rep.json  $TARGET_DIR/textrank/textrank.json --output "tfidf_vsm.txt"
+python3 ./src/matrix_factorization.py $SOURCE_DIR/unseen_2018_events_description.csv $TARGET_DIR/textrank/textrank.json
