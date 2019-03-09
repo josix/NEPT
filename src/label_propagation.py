@@ -48,6 +48,10 @@ PARSER.add_argument("--mapping",
 PARSER.add_argument("--propagated_by_preference_directly",
                     type=bool,
                     default=False)
+PARSER.add_argument("--output",
+                    type=str,
+                    default="rep.txt",
+                    help="The output name of the generated embedding file.")
 ARGS = PARSER.parse_args()
 UNSEEN_EVENTS_FILE = ARGS.unseen_event_file
 EMBEDDING_FILE = ARGS.embedding_file
@@ -296,7 +300,7 @@ if __name__ == "__main__":
         # propagated embedding could be changed
         # UNSEEN_EMBEDDING_DICT[id_] = embedding_propgation(ID_LIST, propagated_emb, weight_func=lambda x: 1 / (0.00001 + x)) # params to trained
         print()
-    with open('unseen_events_label_embedding(textrank_top100queries_strong_user_before2018).txt', 'wt') as fout:
+    with open(ARGS.output, 'wt') as fout:
         fout.write("{}\n".format(len(UNSEEN_EMBEDDING_DICT)))
         for id_, embedding in UNSEEN_EMBEDDING_DICT.items():
             fout.write("{} {}\n".format(id_, ' '.join(map(lambda x:str(round(x, 6)),embedding))))
