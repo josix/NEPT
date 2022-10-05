@@ -45,7 +45,7 @@ FILEPATH = ARGS.file
 OUTPUT = ARGS.output
 
 def vsm(fp=FILEPATH):
-    print("Train vsm from {}".format(fp))
+    print(f"Train vsm from {fp}")
     with open(fp, 'r') as fin:
         index_id_dict = {}
         corpus = []
@@ -69,7 +69,7 @@ def word2vec_train(filepath: str):
     '''
     Return a Word2VecKeyedVectors
     '''
-    print("Train word2vec from {}".format(filepath))
+    print(f"Train word2vec from {filepath}")
     with open(filepath, 'rt') as fin:
         textrank = analyse.TextRank()
         jieba.set_dictionary("./jieba-zh_TW_NEPT_src/jieba/dict.txt")
@@ -77,10 +77,12 @@ def word2vec_train(filepath: str):
         for line in tqdm(fin):
             event_id, *event_description_list = line.strip().split(',')
             event_description = " ".join(event_description_list)
-            sentence = []
-            for word_pair in textrank.tokenizer.cut(event_description):
-                if textrank.pairfilter(word_pair):
-                    sentence.append(word_pair.word)
+            sentence = [
+                word_pair.word
+                for word_pair in textrank.tokenizer.cut(event_description)
+                if textrank.pairfilter(word_pair)
+            ]
+
             sentences.append(sentence)
         model = Word2Vec(sentences, size=64,
                          alpha=0.025, window=2,
@@ -94,12 +96,12 @@ def word2vec_train(filepath: str):
                          trim_rule=None, sorted_vocab=1,
                          batch_words=10000, compute_loss=False,
                          callbacks=(), max_final_vocab=None)
-        model.save(OUTPUT+'.model')
+        model.save(f'{OUTPUT}.model')
         return model.wv
 
 def textrank_get_keywords(filepath: str, word_vector=None, tfidf=None) -> dict:
     '''Return a dict{event_id: [words]} '''
-    tag_dict = dict()
+    tag_dict = {}
     jieba.set_dictionary("./jieba-zh_TW_NEPT_src/jieba/dict.txt")
     with open(filepath, 'rt') as fin:
         for line in tqdm(fin):
@@ -118,14 +120,14 @@ def textrank_get_keywords(filepath: str, word_vector=None, tfidf=None) -> dict:
 
 def tfidf_get_keywords(filepath: str, model, topK=10) -> dict:
     '''Return a dict{event_id: [words]} '''
-    id_to_words = dict()
+    id_to_words = {}
     jieba.set_dictionary("./jieba-zh_TW_NEPT_src/jieba/dict.txt")
     with open(filepath, 'rt') as fin:
         for line in tqdm(fin):
             event_description:list
             event_id, *event_description = line.strip().split(',')
             event_description:str = " ".join(event_description)
-            words = [word for word in jieba.analyse.extract_tags(event_description)]
+            words = list(jieba.analyse.extract_tags(event_description))
             word_score = []
             for word in set(words):
                 try:
@@ -138,25 +140,27 @@ def tfidf_get_keywords(filepath: str, model, topK=10) -> dict:
 
 if __name__ == "__main__":
     TRAINED_MODEL=None
-    WORD2VEC=None
     if ARGS.textrank_idf or ARGS.tfidf:
         IDS_DICT, TRAINED_MODEL, DOC_MATRIX = vsm()
-        pickle.dump(TRAINED_MODEL, open(OUTPUT+'vsm_model.pickle', 'wb'))
-    if ARGS.textrank_word2vec:
-        WORD2VEC = word2vec_train(FILEPATH)
-
+        pickle.dump(TRAINED_MODEL, open(f'{OUTPUT}vsm_model.pickle', 'wb'))
+    WORD2VEC = word2vec_train(FILEPATH) if ARGS.textrank_word2vec else None
     if ARGS.tfidf:
         EVENT_TITLE_TAG_DICT = tfidf_get_keywords(FILEPATH, TRAINED_MODEL)
     else:
         EVENT_TITLE_TAG_DICT = textrank_get_keywords(FILEPATH, tfidf=TRAINED_MODEL, word_vector=WORD2VEC)
-    with open(OUTPUT+".json", 'w', encoding='utf-8') as json_file:
+    with open(f"{OUTPUT}.json", 'w', encoding='utf-8') as json_file:
         json.dump(EVENT_TITLE_TAG_DICT,
                   json_file,
                   ensure_ascii=False)
-    with open(OUTPUT+".txt", 'w', encoding="utf-8") as fout:
+    with open(f"{OUTPUT}.txt", 'w', encoding="utf-8") as fout:
         for key, value in EVENT_TITLE_TAG_DICT.items():
-            fout.write("{}, {}\n".format(key, '/ '.join([x[0] for x in value])))
-    with open(OUTPUT+"_mapping.txt", 'w') as fout:
-        corpus = set([word[0] for word_list in EVENT_TITLE_TAG_DICT.values() for word in word_list])
+            fout.write(f"{key}, {'/ '.join([x[0] for x in value])}\n")
+    with open(f"{OUTPUT}_mapping.txt", 'w') as fout:
+        corpus = {
+            word[0]
+            for word_list in EVENT_TITLE_TAG_DICT.values()
+            for word in word_list
+        }
+
         for index, word in enumerate(corpus):
-            fout.write('w{},{}\n'.format(index, word))
+            fout.write(f'w{index},{word}\n')

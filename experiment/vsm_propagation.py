@@ -57,13 +57,16 @@ def embedding_propgation(ranking_list, fp=EMBEDDING_FILE):
         embedding_dict = json.load(json_file_in)
     accumulate_vector = []
     add_count = 0
-    for ranking_list_index, id_ in enumerate(ranking_list):
+    for id_ in ranking_list:
         try:
             added_vector = embedding_dict[id_]
         except KeyError:
             # Due to some events are lack of people book them,
             # they are removed from the training set.
-            print("{} is not a significant event so that not included in the training embedding.".format(id_))
+            print(
+                f"{id_} is not a significant event so that not included in the training embedding."
+            )
+
             continue
         if add_count == 0:
             accumulate_vector = added_vector
@@ -72,7 +75,7 @@ def embedding_propgation(ranking_list, fp=EMBEDDING_FILE):
                             enumerate(zip(accumulate_vector, added_vector)):
                 accumulate_vector[index] = element1 + element2
         add_count += 1
-    print('{} related events.'.format(add_count))
+    print(f'{add_count} related events.')
     return list(map(lambda x: x / add_count, accumulate_vector))
 
 def load_unseen(fp=UNSEEN_EVENTS_FILE):
@@ -98,6 +101,6 @@ if __name__ == "__main__":
         UNSEEN_EMBEDDING_DICT[id_] = embedding_propgation(ID_LIST)
         print()
     with open('unssen_events_rep_hpe2.txt', 'wt') as fout:
-        fout.write("{}\n".format(len(UNSEEN_EMBEDDING_DICT)))
+        fout.write(f"{len(UNSEEN_EMBEDDING_DICT)}\n")
         for id_, embedding in UNSEEN_EMBEDDING_DICT.items():
-            fout.write("{} {}\n".format(id_, ' '.join(map(lambda x:str(round(x, 6)),embedding))))
+            fout.write(f"{id_} {' '.join(map(lambda x: str(round(x, 6)), embedding))}\n")

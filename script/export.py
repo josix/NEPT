@@ -8,6 +8,7 @@ Export data in proNet-core's input data format:
                                                       u1   item3 1
                                                       ...
 """
+
 import argparse
 
 PARSER = argparse.ArgumentParser()
@@ -27,4 +28,4 @@ with open(OUTPUT, 'wt') as fout:
         for line in fin:
             user, *items = line.strip().split(' ')
             for item in items:
-                fout.write("u{} {} 1\n".format(user, item))
+                fout.write(f"u{user} {item} 1\n")

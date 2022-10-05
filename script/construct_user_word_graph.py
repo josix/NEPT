@@ -42,6 +42,6 @@ if __name__ == "__main__":
                         # fout.write('{} {} {}\n'.format(item, word_id_mapping[word], weight))
                         # on user-word graph
                         weight = textrank_weight * int(user_item_weight)
-                        fout.write('{} {} {}\n'.format(user, word_id_mapping[word], weight))
+                        fout.write(f'{user} {word_id_mapping[word]} {weight}\n')
                 except KeyError:
                     continue

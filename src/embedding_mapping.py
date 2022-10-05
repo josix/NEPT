@@ -19,28 +19,26 @@ def matrix_multiply(m1, m2):
     b_row, b_col = len(m2), len(m2[0])
     result = []
     for row in range(a_row):
-        new_row = []
-        for col in range(b_col):
-            new_row.append(sum([m1[row][i] * m2[i][col] for i in range(a_col)]))
+        new_row = [
+            sum(m1[row][i] * m2[i][col] for i in range(a_col))
+            for col in range(b_col)
+        ]
+
         result.append(new_row)
     return result
 
 def dot_product(m1, m2):
     a_row, a_col = len(m1), len(m1[0])
     b_row, b_col = len(m2), len(m2[0])
-    if a_row != b_row or a_col != a_col:
+    if a_row != b_row:
         print('wrong dim')
         return None
-    result = []
-    for row in range(a_row):
-        new_row = sum([ a*b for a, b in zip(m1[row], m2[row])])
-        result.append([new_row])
-    return result
+    return [[sum(a*b for a, b in zip(m1[row], m2[row]))] for row in range(a_row)]
 
 def matrix_add(m1, m2):
     a_row, a_col = len(m1), len(m1[0])
     b_row, b_col = len(m2), len(m2[0])
-    if a_row != b_row or a_col != a_col:
+    if a_row != b_row:
         print('wrong dim')
         return None
     result = []
@@ -52,12 +50,12 @@ def matrix_add(m1, m2):
 def rmse(m1, m2):
     a_row, a_col = len(m1), len(m1[0])
     b_row, b_col = len(m2), len(m2[0])
-    if a_row != b_row or a_col != a_col:
+    if a_row != b_row:
         print('wrong dim')
         return None
     result = []
     for row in range(a_row):
-        new_row = (sum([(a-b)**2 for a, b in zip(m1[row], m2[row])]) / a_col) ** 0.5
+        new_row = (sum((a-b)**2 for a, b in zip(m1[row], m2[row])) / a_col)**0.5
         result.append([new_row])
     return result
 
@@ -84,9 +82,9 @@ def train_mapping(source_space, target_space, dim=(128, 128), lr=0.01, max_iters
                 prev_weight = weights
                 weights = matrix_add(weights, update_gradient)
                 # previous_step_size = distance(weight, prev_weight)
-        print('loss {}'.format(loss/ len(intersect_ids)))
+        print(f'loss {loss / len(intersect_ids)}')
         iters += 1
-        #break
+            #break
     return weights
 
 if __name__ == "__main__":

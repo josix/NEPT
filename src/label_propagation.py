@@ -2,6 +2,7 @@
 Using the vsm model to pass the embedding from the high similarity items entity
 to the unseen item entity.
 """
+
 import json
 import argparse
 import pickle as pickle
@@ -65,19 +66,19 @@ MODEL=None
 if ARGS.embedrank:
     try:
         print('load doc2vec model')
-        MODEL = Doc2Vec.load(CONCEPT_FOLDER+"/doc2vec.model")
+        MODEL = Doc2Vec.load(f"{CONCEPT_FOLDER}/doc2vec.model")
     except FileNotFoundError:
         pass
 elif ARGS.textrank_word2vec:
     try:
         print('load word2vec model')
-        MODEL = word2vec.Word2Vec.load(CONCEPT_FOLDER+"/word2vec.model")
+        MODEL = word2vec.Word2Vec.load(f"{CONCEPT_FOLDER}/word2vec.model")
     except FileNotFoundError:
         pass
 elif ARGS.textrank_idf:
     try:
         print('load vsm ')
-        MODEL = pickle.load(open(CONCEPT_FOLDER+"/vsm_model.pickle", 'rb'))
+        MODEL = pickle.load(open(f"{CONCEPT_FOLDER}/vsm_model.pickle", 'rb'))
     except FileNotFoundError:
         pass
 
@@ -104,7 +105,7 @@ def gen_event_lbl_emb(concept_embedding, concept_mapping, fp=CORPUS_FILE):
                     event_concept_embeddings.append(concept_embedding[concept_mapping[word]])
                 except KeyError:
                     continue
-                if event_concept_embeddings == []:
+                if not event_concept_embeddings:
                     continue
                 event_vec[id_key] = [sum(value) / len(value) for value in  zip(*event_concept_embeddings)]
                 # call spotify annoy
@@ -117,21 +118,22 @@ def gen_event_lbl_emb(concept_embedding, concept_mapping, fp=CORPUS_FILE):
 def textrank_getkeywords(paragraph):
     if not MODEL:
         return jieba.analyse.textrank(paragraph, topK=10, withWeight=False, allowPOS=('ns', 'n'))
-    else:
-        # Switch word2vec or idf
-        if ARGS.textrank_idf:
-            return jieba.analyse.textrank_vsm(paragraph, topK=10, withWeight=False, allowPOS=('ns', 'n'), vsm=MODEL)
-        elif ARGS.textrank_word2vec:
-            return jieba.analyse.textrank_similarity(paragraph, topK=10, withWeight=False, allowPOS=('ns', 'n'), word_embedding=MODEL)
+    # Switch word2vec or idf
+    if ARGS.textrank_idf:
+        return jieba.analyse.textrank_vsm(paragraph, topK=10, withWeight=False, allowPOS=('ns', 'n'), vsm=MODEL)
+    elif ARGS.textrank_word2vec:
+        return jieba.analyse.textrank_similarity(paragraph, topK=10, withWeight=False, allowPOS=('ns', 'n'), word_embedding=MODEL)
 
 def embedrank_getkeywords(paragraph, withWeight=False):
     '''Return a list[(word, weight)] or list[word] '''
     textrank = analyse.TextRank()
     textrank.pos_filt = frozenset(('ns', 'n'))
-    words = set()
-    for word_pair in textrank.tokenizer.cut(paragraph):
-        if textrank.pairfilter(word_pair):
-            words.add(word_pair.word)
+    words = {
+        word_pair.word
+        for word_pair in textrank.tokenizer.cut(paragraph)
+        if textrank.pairfilter(word_pair)
+    }
+
     doc_vec = MODEL.infer_vector(words)
     candidate_keywords = []
     for word in words:
@@ -145,9 +147,9 @@ def embedrank_getkeywords(paragraph, withWeight=False):
 
 def tfidf_getkeywords(paragraph):
     '''Return a list[(word, weight)] or list[word] '''
-    with open(CONCEPT_FOLDER+"/tfidfvsm_model.pickle", 'rb') as fin:
+    with open(f"{CONCEPT_FOLDER}/tfidfvsm_model.pickle", 'rb') as fin:
         model = pickle.load(fin)
-    words = [word for word in jieba.analyse.extract_tags(paragraph)]
+    words = list(jieba.analyse.extract_tags(paragraph))
     word_score = []
     for word in set(words):
         try:
@@ -196,15 +198,13 @@ def closest_topK(unseen_event, concept_embedding, concept_mapping, dim, topK=10,
         except KeyError:
             continue
     unseen_event_vector = [ sum(value) / len(value) for value in  zip(*event_concept_embeddings)]
-    if unseen_event_vector == []:
+    if not unseen_event_vector:
         unseen_event_vector = [0] * dim
     annoy_index = AnnoyIndex(dim)
     annoy_index.load('cc2vec_textrank.ann')
     # Find topK colest item according to the label embedding
     ranking_list = annoy_index.get_nns_by_vector(unseen_event_vector, 10, search_k=-1, include_distances=True)
-    propgation_list = []
-    for id_, score in zip(ranking_list[0], ranking_list[1]):
-        propgation_list.append((id_, score))
+    propgation_list = list(zip(ranking_list[0], ranking_list[1]))
     return unseen_event_vector, propgation_list
 
 def embedding_propgation(ranking_list, id_to_emb, weight_func = lambda x : 1):
@@ -218,7 +218,10 @@ def embedding_propgation(ranking_list, id_to_emb, weight_func = lambda x : 1):
         except KeyError:
             # Due to some events are lack of people book them,
             # they are removed from the training set.
-            print("{} is not a significant event so that not included in the training embedding.".format(id_))
+            print(
+                f"{id_} is not a significant event so that not included in the training embedding."
+            )
+
             continue
         weight = weight_func(score)
         weight_list.append(weight)
@@ -230,8 +233,11 @@ def embedding_propgation(ranking_list, id_to_emb, weight_func = lambda x : 1):
                 accumulate_vector[index] = element1 + element2 * weight
         add_count += 1
         accumulate_weight += weight
-    print('weight list: {}'.format(list(map(lambda x: x / accumulate_weight, weight_list))))
-    print('{} related events.'.format(add_count))
+    print(
+        f'weight list: {list(map(lambda x: x / accumulate_weight, weight_list))}'
+    )
+
+    print(f'{add_count} related events.')
     return list(map(lambda x: x / accumulate_weight, accumulate_vector))
 
 def load_unseen(fp=UNSEEN_EVENTS_FILE):
@@ -247,7 +253,7 @@ def load_unseen(fp=UNSEEN_EVENTS_FILE):
 
 def load_concept(fp=CONCEPT_FOLDER):
     embedding = {}
-    with open(CONCEPT_FOLDER + '/rep.line2') as fin:
+    with open(f'{CONCEPT_FOLDER}/rep.line2') as fin:
         fin.readline()
         for line in fin:
             id_, *vector = line.strip().split()
@@ -269,7 +275,7 @@ def load_concept(fp=CONCEPT_FOLDER):
 def transform(source_embedding:dict):
     from keras.models import load_model
     import numpy as np
-    MODEL = load_model(CONCEPT_FOLDER+ "/mapping.h5")
+    MODEL = load_model(f"{CONCEPT_FOLDER}/mapping.h5")
     target_embedding = {}
     for key, emb in source_embedding.items():
         transformed_emb = MODEL.predict(np.array([emb]))[0]
@@ -301,6 +307,6 @@ if __name__ == "__main__":
         # UNSEEN_EMBEDDING_DICT[id_] = embedding_propgation(ID_LIST, propagated_emb, weight_func=lambda x: 1 / (0.00001 + x)) # params to trained
         print()
     with open(ARGS.output, 'wt') as fout:
-        fout.write("{}\n".format(len(UNSEEN_EMBEDDING_DICT)))
+        fout.write(f"{len(UNSEEN_EMBEDDING_DICT)}\n")
         for id_, embedding in UNSEEN_EMBEDDING_DICT.items():
-            fout.write("{} {}\n".format(id_, ' '.join(map(lambda x:str(round(x, 6)),embedding))))
+            fout.write(f"{id_} {' '.join(map(lambda x: str(round(x, 6)), embedding))}\n")

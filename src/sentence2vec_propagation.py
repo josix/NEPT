@@ -34,9 +34,11 @@ SIZE = 64
 def sentence2vec(fp=CORPUS_FILE):
     with open(fp, 'r') as json_file_in:
         item_tags_dict = json.load(json_file_in)
-        corpus = []
-        for id_key, value in item_tags_dict.items():
-            corpus.append(TaggedDocument(words=value, tags=[id_key]))
+        corpus = [
+            TaggedDocument(words=value, tags=[id_key])
+            for id_key, value in item_tags_dict.items()
+        ]
+
         model = Doc2Vec(min_count=0,vector_size=SIZE,window=1,dbow_words=0,dm=1, dm_concat=1, alpha=0.025, min_alpha=0.025, epochs=MAX_EPOCHS)
         model.build_vocab(corpus)
         model.train(corpus, epochs=model.iter, total_examples=model.corpus_count)
@@ -55,10 +57,7 @@ def closest_topK(unseen_event, model, dim, topK=10):
     annoy_index = AnnoyIndex(dim)
     annoy_index.load('sentence2vec.ann')
     ranking_list = annoy_index.get_nns_by_vector(unseen_event_vector, 10, search_k=-1, include_distances=True)
-    propgation_list = []
-    for id_, score in zip(ranking_list[0], ranking_list[1]):
-        propgation_list.append((id_, score))
-    return propgation_list
+    return list(zip(ranking_list[0], ranking_list[1]))
 
 def embedding_propgation(ranking_list, weight_func = lambda x : 1, fp=EMBEDDING_FILE):
     with open(EMBEDDING_FILE, 'r') as json_file_in:
@@ -73,7 +72,10 @@ def embedding_propgation(ranking_list, weight_func = lambda x : 1, fp=EMBEDDING_
         except KeyError:
             # Due to some events are lack of people book them,
             # they are removed from the training set.
-            print("{} is not a significant event so that not included in the training embedding.".format(id_))
+            print(
+                f"{id_} is not a significant event so that not included in the training embedding."
+            )
+
             continue
         weight = weight_func(score)
         weight_list.append(weight)
@@ -85,8 +87,11 @@ def embedding_propgation(ranking_list, weight_func = lambda x : 1, fp=EMBEDDING_
                 accumulate_vector[index] = element1 + element2 * weight
         add_count += 1
         accumulate_weight += weight
-    print('weight list: {}'.format(list(map(lambda x: x / accumulate_weight, weight_list))))
-    print('{} related events.'.format(add_count))
+    print(
+        f'weight list: {list(map(lambda x: x / accumulate_weight, weight_list))}'
+    )
+
+    print(f'{add_count} related events.')
     return list(map(lambda x: x / accumulate_weight, accumulate_vector))
 
 def load_unseen(fp=UNSEEN_EVENTS_FILE):
@@ -112,6 +117,6 @@ if __name__ == "__main__":
         UNSEEN_EMBEDDING_DICT[id_] = embedding_propgation(ID_LIST, weight_func = lambda x : 1 / (0.00001 + x))
         print()
     with open('unssen_events_rep_hpe(sentence2vec_weight_angular_size_1_dm_iter10).txt', 'wt') as fout:
-        fout.write("{}\n".format(len(UNSEEN_EMBEDDING_DICT)))
+        fout.write(f"{len(UNSEEN_EMBEDDING_DICT)}\n")
         for id_, embedding in UNSEEN_EMBEDDING_DICT.items():
-            fout.write("{} {}\n".format(id_, ' '.join(map(lambda x:str(round(x, 6)),embedding))))
+            fout.write(f"{id_} {' '.join(map(lambda x: str(round(x, 6)), embedding))}\n")

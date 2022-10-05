@@ -27,13 +27,9 @@ def load_semantic_emb(fp, word_id_to_word):
     return id_to_emb, index_to_word
 
 def train_cluster(training_data):
-    kmeans = KMeans(
-            n_clusters=5000,
-            random_state=0,
-            max_iter=30000,
-            n_jobs=20,
-            verbose=1).fit(training_data)
-    return kmeans
+    return KMeans(
+        n_clusters=5000, random_state=0, max_iter=30000, n_jobs=20, verbose=1
+    ).fit(training_data)
 
 
 if __name__ == "__main__":
@@ -56,12 +52,12 @@ if __name__ == "__main__":
 
     WORD_ID_TO_WORD = load_word_mapping(ARGS.word_mapping_file)
     WORD_ID_TO_EMB, INDEX_TO_WORD = load_semantic_emb(ARGS.rep, WORD_ID_TO_WORD)
-    data = np.array([value for value in WORD_ID_TO_EMB.values()])
+    data = np.array(list(WORD_ID_TO_EMB.values()))
     print("Training data size:", len(data), len(data[0]))
     model = train_cluster(data)
     with open('textrank_mapping.txt', 'wt') as fout:
         for index, label in enumerate(model.labels_):
-            fout.write("cluster{},{}\n".format(label, INDEX_TO_WORD[index]))
+            fout.write(f"cluster{label},{INDEX_TO_WORD[index]}\n")
 
     WORD_TO_INDEX = {value: key for key, value in INDEX_TO_WORD.items()}
     USER_CLUSTER_TO_WEIGHT_LIST = defaultdict(list)
@@ -70,11 +66,13 @@ if __name__ == "__main__":
             user, item, weight = line.strip().split()
             USER_CLUSTER_TO_WEIGHT_LIST[(user, model.labels_[WORD_TO_INDEX[WORD_ID_TO_WORD[item]]])].append(float(weight))
 
-    USER_CLUSTER_TO_WEIGHT = {}
-    for key in USER_CLUSTER_TO_WEIGHT_LIST:
-        USER_CLUSTER_TO_WEIGHT[key] = sum(USER_CLUSTER_TO_WEIGHT_LIST[key])/len(USER_CLUSTER_TO_WEIGHT_LIST[key])
+    USER_CLUSTER_TO_WEIGHT = {
+        key: sum(USER_CLUSTER_TO_WEIGHT_LIST[key])
+        / len(USER_CLUSTER_TO_WEIGHT_LIST[key])
+        for key in USER_CLUSTER_TO_WEIGHT_LIST
+    }
 
     with open(ARGS.output, 'wt') as fout:
         for (user, cluster_index), weight in USER_CLUSTER_TO_WEIGHT.items():
-            fout.write("{} cluster{} {}\n".format(user, model.labels_[cluster_index], weight))
+            fout.write(f"{user} cluster{model.labels_[cluster_index]} {weight}\n")
 

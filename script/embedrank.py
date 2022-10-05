@@ -82,8 +82,8 @@ def doc2vec_train(filepath: str, max_count=3):
                 epochs=MAX_EPOCHS)
         model.build_vocab(paragraphs)
         model.train(paragraphs, epochs=model.iter, total_examples=model.corpus_count)
-        model.save(OUTPUT + '/doc2vec.model')
-        with open(OUTPUT + '/doc_words_training.json', 'wt') as json_out:
+        model.save(f'{OUTPUT}/doc2vec.model')
+        with open(f'{OUTPUT}/doc_words_training.json', 'wt') as json_out:
             json.dump(document_to_words, json_out, ensure_ascii=False)
         return model, document_to_words
 
@@ -101,10 +101,10 @@ if __name__ == "__main__":
     # check model exists
     DOC2VEC_MODEL = None
     doc_to_words = None
-    if LOAD and os.path.exists(LOAD+'/doc2vec.model'):
-        DOC2VEC_MODEL = Doc2Vec.load(LOAD+'/doc2vec.model')
-    if LOAD and os.path.exists(LOAD+'/doc_words_training.json'):
-        with open(LOAD+'/doc_words_training.json') as json_in:
+    if LOAD and os.path.exists(f'{LOAD}/doc2vec.model'):
+        DOC2VEC_MODEL = Doc2Vec.load(f'{LOAD}/doc2vec.model')
+    if LOAD and os.path.exists(f'{LOAD}/doc_words_training.json'):
+        with open(f'{LOAD}/doc_words_training.json') as json_in:
             doc_to_words = json.load(json_in)
     if DOC2VEC_MODEL is None or doc_to_words is None:
         DOC2VEC_MODEL, doc_to_words = doc2vec_train(FILEPATH)
@@ -115,18 +115,24 @@ if __name__ == "__main__":
             event_id, event_title, *_ = line.strip().split(',')
             title_to_words[event_id] = [(word, 1.0) for word in jieba.analyse.extract_tags(event_title)]
 
-    doc_to_keywords = {}
-    for doc_id, words in doc_to_words.items():
-        doc_to_keywords[doc_id] = [*title_to_words[doc_id], *get_keywords(DOC2VEC_MODEL, words)]
+    doc_to_keywords = {
+        doc_id: [*title_to_words[doc_id], *get_keywords(DOC2VEC_MODEL, words)]
+        for doc_id, words in doc_to_words.items()
+    }
 
-    with open(OUTPUT+"/embedrank.json", 'w', encoding='utf-8') as json_file:
+    with open(f"{OUTPUT}/embedrank.json", 'w', encoding='utf-8') as json_file:
         json.dump(doc_to_keywords,
                   json_file,
                   ensure_ascii=False)
-    with open(OUTPUT+"/embedrank.txt", 'w', encoding="utf-8") as fout:
+    with open(f"{OUTPUT}/embedrank.txt", 'w', encoding="utf-8") as fout:
         for key, value in doc_to_keywords.items():
             fout.write(f"{key}, {'/ '.join([x[0] for x in value])}\n")
-    with open(OUTPUT+"/embedrank_mapping.txt", 'w') as fout:
-        corpus = set([word[0] for word_list in doc_to_keywords.values() for word in word_list])
+    with open(f"{OUTPUT}/embedrank_mapping.txt", 'w') as fout:
+        corpus = {
+            word[0]
+            for word_list in doc_to_keywords.values()
+            for word in word_list
+        }
+
         for index, word in enumerate(corpus):
-            fout.write('w{},{}\n'.format(index, word))
+            fout.write(f'w{index},{word}\n')

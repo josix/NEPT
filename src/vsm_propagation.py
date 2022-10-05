@@ -67,10 +67,10 @@ def closest_topK(unseen_event, ids_dict, model, dim, topK=10):
     annoy_index = AnnoyIndex(dim)
     annoy_index.load('vsm_tfidf.ann')
     ranking_list = annoy_index.get_nns_by_vector(unseen_event_vector, 10, search_k=-1, include_distances=True)
-    propgation_list = []
-    for matrix_row, score in zip(ranking_list[0], ranking_list[1]):
-        propgation_list.append((ids_dict[matrix_row], score))
-    return propgation_list
+    return [
+        (ids_dict[matrix_row], score)
+        for matrix_row, score in zip(ranking_list[0], ranking_list[1])
+    ]
 
 def embedding_propgation(ranking_list, weight_func = lambda x : 1, fp=EMBEDDING_FILE):
     with open(EMBEDDING_FILE, 'r') as json_file_in:
@@ -85,7 +85,10 @@ def embedding_propgation(ranking_list, weight_func = lambda x : 1, fp=EMBEDDING_
         except KeyError:
             # Due to some events are lack of people book them,
             # they are removed from the training set.
-            print("{} is not a significant event so that not included in the training embedding.".format(id_))
+            print(
+                f"{id_} is not a significant event so that not included in the training embedding."
+            )
+
             continue
         weight = weight_func(score)
         weight_list.append(weight)
@@ -97,8 +100,11 @@ def embedding_propgation(ranking_list, weight_func = lambda x : 1, fp=EMBEDDING_
                 accumulate_vector[index] = element1 + element2 * weight
         add_count += 1
         accumulate_weight += weight
-    print('weight list: {}'.format(list(map(lambda x: x / accumulate_weight, weight_list))))
-    print('{} related events.'.format(add_count))
+    print(
+        f'weight list: {list(map(lambda x: x / accumulate_weight, weight_list))}'
+    )
+
+    print(f'{add_count} related events.')
     return list(map(lambda x: x / accumulate_weight, accumulate_vector))
 
 def load_unseen(fp=UNSEEN_EVENTS_FILE):
@@ -138,6 +144,6 @@ if __name__ == "__main__":
             # Generate item tfidf vector without composition
             UNSEEN_EMBEDDING_DICT[id_] = get_unseen_tfidf(query_string, TRAINED_MODEL, DOC_MATRIX.shape[1])
     with open(ARGS.output, 'wt') as fout:
-        fout.write("{}\n".format(len(UNSEEN_EMBEDDING_DICT)))
+        fout.write(f"{len(UNSEEN_EMBEDDING_DICT)}\n")
         for id_, embedding in UNSEEN_EMBEDDING_DICT.items():
-            fout.write("{} {}\n".format(id_, ' '.join(map(lambda x:str(round(x, 6)),embedding))))
+            fout.write(f"{id_} {' '.join(map(lambda x: str(round(x, 6)), embedding))}\n")

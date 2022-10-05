@@ -43,7 +43,7 @@ def recommendation(query, item_vertex_embedding, item_detail_map=None):
         recommendation_list.append((cosine_similarity, item))
     recommendation_list.sort(reverse=True)
     for index, recommendation in enumerate(recommendation_list[1:11]):
-        print("{} Recommendation: {}".format(index, recommendation))
+        print(f"{index} Recommendation: {recommendation}")
         # show detail
         print(item_detail_map[recommendation[1]])
     return list(map(lambda x: x[1], recommendation_list[1:11]))
@@ -75,7 +75,7 @@ def random_recommendation(query, item_set, item_detail_map=None):
     print(item_detail_map[query])
     recommendation_list = random.sample(list(item_set), 10)
     for index, recommendation in enumerate(recommendation_list):
-        print("{} Recommendation: {}".format(index, recommendation))
+        print(f"{index} Recommendation: {recommendation}")
         # show detail
         print(item_detail_map[recommendation])
     return recommendation_list
@@ -123,8 +123,15 @@ if __name__ == "__main__":
             acu_recommendation_list.extend(recommendation_list)
 
             seen_num, unseen_num = eval_unseen_events_num(recommendation_list, seen_events, unseen_events)
-            print('seen_num: {}'.format(seen_num), 'unseen_num: {}'.format(unseen_num), 'unseen_num/total: {}'.format(unseen_num/len(recommendation_list)))
+            print(
+                f'seen_num: {seen_num}',
+                f'unseen_num: {unseen_num}',
+                f'unseen_num/total: {unseen_num / len(recommendation_list)}',
+            )
+
             acu_score += unseen_num/len(recommendation_list)
             print()
-        print('ave_score: {}'.format(acu_score/count))
-        print('|unique_recommendation| / |all_events|: {}'.format(len(set(acu_recommendation_list))/len(seen_events | unseen_events)))
+        print(f'ave_score: {acu_score / count}')
+        print(
+            f'|unique_recommendation| / |all_events|: {len(set(acu_recommendation_list)) / len(seen_events | unseen_events)}'
+        )

@@ -13,9 +13,8 @@ FILEPATH = ARGS.file
 with open(FILEPATH, 'rt') as fin:
     seen_set = set()
     for line in fin:
-        if ARGS.testing:
-            if "2018" not in line:
-                continue
+        if ARGS.testing and "2018" not in line:
+            continue
         line = line.split(',')
         eventId = line[0]
         if eventId in seen_set:
@@ -25,7 +24,9 @@ with open(FILEPATH, 'rt') as fin:
         # print(line.split(','))
         title = line[4]
         bsObj = BeautifulSoup(broken_html, 'lxml')
-        tags = set([tag.name for tag in bsObj.find_all() if tag.name != 'br'])
+        tags = {tag.name for tag in bsObj.find_all() if tag.name != 'br'}
         #print(tags, broken_html)
-        print("{},{},{}".format(eventId, title, bsObj.find_all('html')[0].text if bsObj.find_all('html') != [] else ''))
+        print(
+            f"{eventId},{title},{bsObj.find_all('html')[0].text if bsObj.find_all('html') != [] else ''}"
+        )
         #print(bsObj.find_all('html')[0].text)

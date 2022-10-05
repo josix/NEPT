@@ -9,6 +9,7 @@ eg:
     u1      item3   xxx
     ...
 """
+
 from collections import defaultdict
 import argparse
 
@@ -32,11 +33,13 @@ with open(FILEPATH, 'rt') as fin:
         USER_ITEMS_LIST[user].append(item)
 
 with open(OUTPUT, 'wt') as fout:
-    for user in USER_ITEMS_LIST:
-        output_str = "{} ".format(user)
-        for index, item in enumerate(USER_ITEMS_LIST[user]):
-            if index == len(USER_ITEMS_LIST[user]) - 1:
-                output_str += "{}\n".format(item)
-            else:
-                output_str += "{} ".format(item)
+    for user, value in USER_ITEMS_LIST.items():
+        output_str = f"{user} "
+        for index, item in enumerate(value):
+            output_str += (
+                f"{item}\n"
+                if index == len(USER_ITEMS_LIST[user]) - 1
+                else f"{item} "
+            )
+
         fout.write(output_str)
