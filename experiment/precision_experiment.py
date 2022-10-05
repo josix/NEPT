@@ -107,7 +107,7 @@ def popularity_recommendation(query, recommendation_list, item_detail_map=None):
     print('query event:', query)
     print(item_detail_map[query])
     for index, recommendation in enumerate(recommendation_list):
-        print("{} Recommendation: {}".format(index, recommendation))
+        print(f"{index} Recommendation: {recommendation}")
         print(item_detail_map[recommendation])
     return recommendation_list
 
@@ -202,7 +202,7 @@ if __name__ == "__main__":
             print('query event:', query_item)
             print(item_detail_map[query_item])
             for index, recommendation in enumerate(top_5_recommendation_list):
-                print("{} Recommendation: {}".format(index, recommendation))
+                print(f"{index} Recommendation: {recommendation}")
                 # show detail
                 print(item_detail_map[recommendation])
 
@@ -252,23 +252,26 @@ if __name__ == "__main__":
             total_ave_distance_query_to_rec += ave_edit_distance_query_to_rec
             print('='*20)
             print("Levenshtein Distance:")
-            print("Average Distance (query to rec): {}".format(ave_edit_distance_query_to_rec))
+            print(f"Average Distance (query to rec): {ave_edit_distance_query_to_rec}")
             edit_distance_rec_to_rec = \
                     [fuzz.ratio(item_detail_map[rec_item_first], item_detail_map[rec_item_second])\
                      for rec_item_first, rec_item_second in combinations(top_5_recommendation_list, 2)]
             ave_edit_distance_rec_to_rec = sum(edit_distance_rec_to_rec) / len(edit_distance_rec_to_rec)
             total_ave_distance_rec_to_rec += ave_edit_distance_rec_to_rec
-            print("Average Distance (rec to rec): {}".format(ave_edit_distance_rec_to_rec))
+            print(f"Average Distance (rec to rec): {ave_edit_distance_rec_to_rec}")
 
             # Precision and Recall Scoring
             print('='*20)
             machingNum = len(set(top_5_recommendation_list) & set(user_watch_list[user]))
             if machingNum:
-                print('hit eventIDs: {}'.format(set(top_5_recommendation_list) & set(user_watch_list[user])))
+                print(
+                    f'hit eventIDs: {set(top_5_recommendation_list) & set(user_watch_list[user])}'
+                )
+
                 print('='*20)
             precision = machingNum/5
             recall = machingNum/len(user_watch_list[user])
-            print('precision@5: {} recall@5: {}'.format(precision, recall))
+            print(f'precision@5: {precision} recall@5: {recall}')
             cases_to_result[(user, query_item)] = {
                     'precision': precision,
                     'recall': recall,
@@ -277,7 +280,7 @@ if __name__ == "__main__":
                     }
             if recall and precision:
                 fscore = 2 / (1 / precision + 1/recall)
-                print('F1: {}'.format(fscore))
+                print(f'F1: {fscore}')
 
                 ranked_precision = 0
                 ranked_machingNum = 0
@@ -288,7 +291,7 @@ if __name__ == "__main__":
                 ave_precision = ranked_precision / ranked_machingNum
                 total_avep += ave_precision
                 maching_count += 1
-                print('AvePrecision: {}\n'.format(ave_precision))
+                print(f'AvePrecision: {ave_precision}\n')
             else:
                 print()
 
@@ -296,14 +299,14 @@ if __name__ == "__main__":
 #    with open('./result/precision@5_2018_transaction_top300_popular_queries_only_new/span3_iter300/textrank.pkl', 'wb') as fout:
 #        pickle.dump(cases_to_result, fout)
 #
-    print('# of queries: {}'.format(count))
-    print('# of queries(precision > 0): {}'.format(maching_count))
+    print(f'# of queries: {count}')
+    print(f'# of queries(precision > 0): {maching_count}')
     if count:
         print('Mean Average Edit Distance (query, recommendation): {:.2f}%'.format(total_ave_distance_query_to_rec / count))
         print('Mean Average Edit Distance (recommendation, recommendation): {:.2f}%'.format(total_ave_distance_rec_to_rec / count))
-    print('Coverage Rate: {}'.format(len(all_recommendation_set) / total_rec_num))
+    print(f'Coverage Rate: {len(all_recommendation_set) / total_rec_num}')
     if maching_count:
-        print('MAP: {}'.format(total_avep / maching_count))
+        print(f'MAP: {total_avep / maching_count}')
         # Past result
         # print('MAP_on_old_rec: {}'.format(past_avep /  label_count))
         # print('MAP_on_old_rec_past: {}'.format(past_avep_old /  label_count))

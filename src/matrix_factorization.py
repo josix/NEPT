@@ -34,7 +34,7 @@ def train_mf(fp=CORPUS_FILE):
     with open(fp, 'r') as json_file_in:
         item_to_terms = json.load(json_file_in)
         corpus = []
-        for index, (id_key, terms) in enumerate(item_to_terms.items()):
+        for id_key, terms in item_to_terms.items():
             sentence = [term for term, weight in terms]
             corpus.append(" ".join(sentence))
         vectorizer = TfidfVectorizer()
@@ -65,7 +65,7 @@ if __name__ == "__main__":
         UNSEEN_EMBEDDING_DICT[id_] = np.dot(unseen_tfidf, pinv(TERM_FACTOR_MATRIX.T)).tolist()[0]
 
     with open('mf.txt', 'wt') as fout:
-        fout.write("{}\n".format(len(UNSEEN_EMBEDDING_DICT)))
+        fout.write(f"{len(UNSEEN_EMBEDDING_DICT)}\n")
         for id_, embedding in UNSEEN_EMBEDDING_DICT.items():
-            fout.write("{} {}\n".format(id_, ' '.join(map(lambda x:str(round(x, 6)),embedding))))
+            fout.write(f"{id_} {' '.join(map(lambda x: str(round(x, 6)), embedding))}\n")
 

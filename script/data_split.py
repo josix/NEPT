@@ -6,6 +6,7 @@ eg:
     u1     item1 item2 item3 ...     u1   item1 item3 item4     u1 item2  item5
 
 """
+
 from collections import defaultdict
 import random
 import argparse
@@ -43,19 +44,25 @@ with open(FILEPATH, 'rt') as fin:
         TESTING_DATA[user] = items[cut_index:]
 
 with open(TRAIN_OUTPUT, 'wt') as fout:
-    for user in TRAINING_DATA:
-        output_str = "{} ".format(user)
-        for index, item in enumerate(TRAINING_DATA[user]):
-            output_str +=\
-                "{}\n".format(item) if index == len(TRAINING_DATA[user]) - 1\
-                else "{} ".format(item)
+    for user, value in TRAINING_DATA.items():
+        output_str = f"{user} "
+        for index, item in enumerate(value):
+            output_str += (
+                f"{item}\n"
+                if index == len(TRAINING_DATA[user]) - 1
+                else f"{item} "
+            )
+
         fout.write(output_str)
 
 with open(TEST_OUTPUT, 'wt') as fout:
-    for user in TESTING_DATA:
-        output_str = "{} ".format(user)
-        for index, item in enumerate(TESTING_DATA[user]):
-            output_str +=\
-                   "{}\n".format(item) if index == len(TESTING_DATA[user]) - 1\
-                   else "{} ".format(item)
+    for user, value_ in TESTING_DATA.items():
+        output_str = f"{user} "
+        for index, item in enumerate(value_):
+            output_str += (
+                f"{item}\n"
+                if index == len(TESTING_DATA[user]) - 1
+                else f"{item} "
+            )
+
         fout.write(output_str)
